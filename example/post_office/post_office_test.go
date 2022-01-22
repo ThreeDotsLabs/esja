@@ -18,4 +18,21 @@ func TestPostcard_Lifecycle(t *testing.T) {
 
 	assert.Equal(t, id, postcard.ID())
 
+	err = postcard.Handle(post_office.Addressed{
+		Sender: post_office.Address{
+			Name:  "Alice",
+			Line1: "Foo Street 123",
+			Line2: "Barville",
+		},
+		Addressee: post_office.Address{
+			Name:  "Bob",
+			Line1: "987 Xyz Avenue",
+			Line2: "Qux City",
+		},
+	})
+	require.NoError(t, err)
+
+	pc := postcard.Base()
+	assert.NotEmpty(t, pc.Sender())
+	assert.NotEmpty(t, pc.Addressee())
 }

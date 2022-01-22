@@ -62,11 +62,14 @@ func (l *Postcard) Handle(event event.Event) error {
 		l.handleSent(e)
 	case Received:
 		l.handleReceived(e)
+	default:
+		return fmt.Errorf("don't know how to handle event '%s'", event.EventName())
 	}
 
-	return fmt.Errorf("don't know how to handle event '%s'", event.EventName())
+	return nil
 }
 
-func NewPostcardAggregate(id aggregate.ID) (aggregate.Aggregate[Postcard], error) {
-	return aggregate.NewAggregate[Postcard](id, &Postcard{})
+func NewPostcardAggregate(id aggregate.ID) (aggregate.Aggregate[*Postcard], error) {
+	// Generic code in Golang cannot instantiate a new *Postcard, so we pass it from the application code.
+	return aggregate.NewAggregate[*Postcard](id, &Postcard{})
 }

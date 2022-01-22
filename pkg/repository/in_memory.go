@@ -19,34 +19,33 @@ func NewInMemoryRepository[T aggregate.EventSourced]() *InMemoryRepository[T] {
 	}
 }
 
-func (i InMemoryRepository[T]) Get(id aggregate.ID) (*aggregate.Aggregate[T], error) {
+func (i InMemoryRepository[T]) Load(id aggregate.ID, a *aggregate.Aggregate[T]) error {
 	i.lock.RLock()
 	defer i.lock.RUnlock()
 
 	var (
 		t   T
-		a   *aggregate.Aggregate[T]
 		err error
 	)
 
 	events, ok := i.events[id]
 	if !ok {
-		return a, ErrAggregateNotFound
+		return ErrAggregateNotFound
 	}
 
 	for _, event := range events {
-		err := t.Handle(event)
+		err := a.Base().Handle(event)
 		if err != nil {
-			return a, fmt.Errorf("error handling event '%s': %w", event.EventName(), err)
+			return fmt.Errorf("error handling event '%s': %w", event.EventName(), err)
 		}
 	}
 
 	a, err = aggregate.NewAggregate(id, t)
 	if err != nil {
-		return a, err
+		return err
 	}
 
-	return a, nil
+	return nil
 }
 
 func (i *InMemoryRepository[T]) Save(a *aggregate.Aggregate[T]) error {

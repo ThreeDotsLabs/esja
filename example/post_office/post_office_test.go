@@ -58,15 +58,20 @@ func TestPostcard_InMemoryRepository(t *testing.T) {
 	require.NoError(t, err)
 
 	repo := repository.NewInMemoryRepository[*post_office.Postcard]()
-	pc, err := repo.Get(id)
+
+	// fromRepo will be the target of repo.Load
+	fromRepo, err := post_office.NewPostcardAggregate(id)
+	require.NoError(t, err)
+
+	err = repo.Load(id, fromRepo)
 	assert.Equal(t, repository.ErrAggregateNotFound, err)
 
 	err = repo.Save(postcard)
 	require.NoError(t, err)
 
-	pc, err = repo.Get(id)
+	err = repo.Load(id, fromRepo)
 	assert.NoError(t, err)
 
-	assert.Equal(t, postcard.ID(), pc.ID())
-	assert.Equal(t, postcard.Base().Addressee(), pc.Base().Addressee())
+	assert.Equal(t, postcard.ID(), fromRepo.ID())
+	assert.Equal(t, postcard.Base().Addressee(), fromRepo.Base().Addressee())
 }

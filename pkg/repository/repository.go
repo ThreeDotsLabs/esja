@@ -10,6 +10,6 @@ var (
 )
 
 type Repository[T aggregate.EventSourced] interface {
-	Get(id aggregate.ID) (aggregate.Aggregate[T], error)
+	Load(id aggregate.ID, a *aggregate.Aggregate[T]) error
 	Save(a aggregate.Aggregate[T]) error
 }

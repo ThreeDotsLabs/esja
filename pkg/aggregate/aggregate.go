@@ -47,7 +47,7 @@ func (a Aggregate[T]) Base() T {
 }
 
 func (a *Aggregate[T]) PopEvents() []event.Event {
-	var tmp []event.Event
+	var tmp = make([]event.Event, len(a.eventsQueue))
 	copy(tmp, a.eventsQueue)
 	a.eventsQueue = []event.Event{}
 

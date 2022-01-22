@@ -2,6 +2,7 @@ package aggregate
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/ThreeDotsLabs/esja/pkg/event"
 )
@@ -12,12 +13,25 @@ type Aggregate[T EventSourced] struct {
 	eventsQueue []event.Event
 }
 
-func (a *Aggregate[T]) Handle(e event.Event) error {
-	err := a.es.Handle(e)
-	if err != nil {
-		return err
+func (a *Aggregate[T]) RecordEvents(events ...event.Event) error {
+	for _, event := range events {
+		err := a.ApplyEvents(event)
+		if err != nil {
+			return err
+		}
+		a.eventsQueue = append(a.eventsQueue, event)
 	}
-	a.eventsQueue = append(a.eventsQueue, e)
+
+	return nil
+}
+
+func (a *Aggregate[T]) ApplyEvents(events ...event.Event) error {
+	for _, event := range events {
+		err := a.es.Handle(event)
+		if err != nil {
+			return fmt.Errorf("error applying event '%s': %w", event.EventName(), err)
+		}
+	}
 	return nil
 }
 

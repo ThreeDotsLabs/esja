@@ -1,7 +1,7 @@
 package repository
 
 import (
-	"fmt"
+	"context"
 	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
 	"github.com/ThreeDotsLabs/esja/pkg/event"
 	"sync"
@@ -19,7 +19,7 @@ func NewInMemoryRepository[T aggregate.EventSourced]() *InMemoryRepository[T] {
 	}
 }
 
-func (i InMemoryRepository[T]) Load(id aggregate.ID, a *aggregate.Aggregate[T]) error {
+func (i InMemoryRepository[T]) Load(_ context.Context, id aggregate.ID, a *aggregate.Aggregate[T]) error {
 	i.lock.RLock()
 	defer i.lock.RUnlock()
 
@@ -33,11 +33,9 @@ func (i InMemoryRepository[T]) Load(id aggregate.ID, a *aggregate.Aggregate[T]) 
 		return ErrAggregateNotFound
 	}
 
-	for _, event := range events {
-		err := a.Base().Handle(event)
-		if err != nil {
-			return fmt.Errorf("error handling event '%s': %w", event.EventName(), err)
-		}
+	err = a.ApplyEvents(events...)
+	if err != nil {
+		return err
 	}
 
 	a, err = aggregate.NewAggregate(id, t)
@@ -48,7 +46,7 @@ func (i InMemoryRepository[T]) Load(id aggregate.ID, a *aggregate.Aggregate[T]) 
 	return nil
 }
 
-func (i *InMemoryRepository[T]) Save(a *aggregate.Aggregate[T]) error {
+func (i *InMemoryRepository[T]) Save(_ context.Context, a *aggregate.Aggregate[T]) error {
 	i.lock.Lock()
 	defer i.lock.Unlock()
 

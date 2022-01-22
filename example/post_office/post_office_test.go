@@ -1,6 +1,7 @@
 package post_office_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/ThreeDotsLabs/esja/pkg/repository"
@@ -32,7 +33,7 @@ func TestPostcard_Lifecycle(t *testing.T) {
 
 	assert.Equal(t, id, postcard.ID())
 
-	err = postcard.Handle(post_office.Addressed{
+	err = postcard.Record(post_office.Addressed{
 		Sender:    senderAddress,
 		Addressee: addresseeAddress,
 	})
@@ -51,27 +52,29 @@ func TestPostcard_InMemoryRepository(t *testing.T) {
 
 	assert.Equal(t, id, postcard.ID())
 
-	err = postcard.Handle(post_office.Addressed{
+	err = postcard.Record(post_office.Addressed{
 		Sender:    senderAddress,
 		Addressee: addresseeAddress,
 	})
 	require.NoError(t, err)
 
 	repo := repository.NewInMemoryRepository[*post_office.Postcard]()
+	ctx := context.Background()
 
 	// fromRepo will be the target of repo.Load
 	fromRepo, err := post_office.NewPostcardAggregate(id)
 	require.NoError(t, err)
 
-	err = repo.Load(id, fromRepo)
+	err = repo.Load(ctx, id, fromRepo)
 	assert.Equal(t, repository.ErrAggregateNotFound, err)
 
-	err = repo.Save(postcard)
+	err = repo.Save(ctx, postcard)
 	require.NoError(t, err)
 
-	err = repo.Load(id, fromRepo)
+	err = repo.Load(ctx, id, fromRepo)
 	assert.NoError(t, err)
 
 	assert.Equal(t, postcard.ID(), fromRepo.ID())
 	assert.Equal(t, postcard.Base().Addressee(), fromRepo.Base().Addressee())
+	assert.Empty(t, fromRepo.PopEvents())
 }

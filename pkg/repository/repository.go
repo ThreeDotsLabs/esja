@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
 )
@@ -10,6 +11,6 @@ var (
 )
 
 type Repository[T aggregate.EventSourced] interface {
-	Load(id aggregate.ID, a *aggregate.Aggregate[T]) error
-	Save(a aggregate.Aggregate[T]) error
+	Load(ctx context.Context, id aggregate.ID, a *aggregate.Aggregate[T]) error
+	Save(ctx context.Context, a aggregate.Aggregate[T]) error
 }

@@ -12,9 +12,7 @@ func (Created) EventName() string {
 	return "Created_v1"
 }
 
-func (l *Postcard) handleCreated(e Created) {
-	l.id = e.id
-}
+func (l *Postcard) handleCreated(_ Created) {}
 
 type Addressed struct {
 	Sender    Address

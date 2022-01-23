@@ -1,4 +1,4 @@
-package mysql
+package sql
 
 import (
 	"context"
@@ -26,5 +26,11 @@ type contextExecutor interface {
 // beginner begins transactions.
 type beginner interface {
 	BeginTx(context.Context, *sql.TxOptions) (*sql.Tx, error)
+}
+
+// database combines all of the database interfaces.
+type database interface {
+	executor
 	contextExecutor
+	beginner
 }

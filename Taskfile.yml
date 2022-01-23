@@ -1,0 +1,15 @@
+version: '3'
+
+tasks:
+  test:
+    cmds:
+      - bash script/wait-for-it.sh 127.0.0.1:5432 -t 10
+      - go test -count=1 ./...
+
+  fmt:
+    cmds:
+      - goimports -w .
+
+  up:
+    cmds:
+      - docker-compose up -d

@@ -8,7 +8,9 @@ import (
 )
 
 type Postcard struct {
-	id aggregate.ID
+	aggregate.Aggregate
+
+	id string
 
 	sender    Address
 	addressee Address
@@ -20,56 +22,89 @@ type Postcard struct {
 	received bool
 }
 
-func (l *Postcard) ID() aggregate.ID {
-	return l.id
+func NewPostcard(id string) (*Postcard, error) {
+	p := &Postcard{}
+	err := p.handle(Created{ID: id})
+	if err != nil {
+		return nil, err
+	}
+	return p, nil
 }
 
-func (l *Postcard) Sender() Address {
-	return l.sender
+func (p *Postcard) ID() string {
+	return p.id
 }
 
-func (l *Postcard) Addressee() Address {
-	return l.addressee
+func (p *Postcard) AggregateID() aggregate.ID {
+	return aggregate.ID(p.id)
 }
 
-func (l *Postcard) Content() string {
-	return l.content
+func (p *Postcard) Write() error {
+	return p.handle(Written{})
 }
 
-func (l *Postcard) Stamped() bool {
-	return l.stamped
+func (p *Postcard) Address(sender Address, addressee Address) error {
+	return p.handle(Addressed{
+		Sender:    sender,
+		Addressee: addressee,
+	})
 }
 
-func (l *Postcard) Sent() bool {
-	return l.sent
+func (p *Postcard) Sender() Address {
+	return p.sender
 }
 
-func (l *Postcard) Received() bool {
-	return l.received
+func (p *Postcard) Addressee() Address {
+	return p.addressee
 }
 
-func (l *Postcard) Handle(event event.Event) error {
+func (p *Postcard) Content() string {
+	return p.content
+}
+
+func (p *Postcard) Stamped() bool {
+	return p.stamped
+}
+
+func (p *Postcard) Sent() bool {
+	return p.sent
+}
+
+func (p *Postcard) Received() bool {
+	return p.received
+}
+
+func NewPostcardFromEvents(events []event.Event) (*Postcard, error) {
+	p := &Postcard{}
+	for _, ev := range events {
+		err := p.handle(ev)
+		if err != nil {
+			return nil, fmt.Errorf("error applying event '%s': %w", ev.EventName(), err)
+		}
+	}
+	p.PopEvents()
+	return p, nil
+}
+
+func (p *Postcard) handle(event event.Event) error {
 	switch e := event.(type) {
 	case Created:
-		l.handleCreated(e)
+		p.handleCreated(e)
 	case Addressed:
-		l.handleAddressed(e)
+		p.handleAddressed(e)
 	case Written:
-		l.handleWritten(e)
+		p.handleWritten(e)
 	case Stamped:
-		l.handleStamped(e)
+		p.handleStamped(e)
 	case Sent:
-		l.handleSent(e)
+		p.handleSent(e)
 	case Received:
-		l.handleReceived(e)
+		p.handleReceived(e)
 	default:
 		return fmt.Errorf("don't know how to handle event '%s'", event.EventName())
 	}
 
-	return nil
-}
+	p.RecordEvent(event)
 
-func NewPostcardAggregate(id aggregate.ID) (*aggregate.Aggregate[*Postcard], error) {
-	// Generic code in Golang cannot instantiate a new *Postcard, so we pass it from the application code.
-	return aggregate.NewAggregate[*Postcard](id, &Postcard{})
+	return nil
 }

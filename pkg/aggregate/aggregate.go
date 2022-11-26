@@ -15,13 +15,6 @@ type EventSourced interface {
 	PopEvents() []event.Event
 }
 
-func NewAggregate(id ID) (*Aggregate, error) {
-	return &Aggregate{
-		id:          id,
-		eventsQueue: []event.Event{},
-	}, nil
-}
-
 func (a *Aggregate) PopEvents() []event.Event {
 	var tmp = make([]event.Event, len(a.eventsQueue))
 	copy(tmp, a.eventsQueue)
@@ -31,5 +24,10 @@ func (a *Aggregate) PopEvents() []event.Event {
 }
 
 func (a *Aggregate) RecordEvent(ev event.Event) {
+	a.version += 1
 	a.eventsQueue = append(a.eventsQueue, ev)
+}
+
+func (a Aggregate) Version() int {
+	return a.version
 }

@@ -50,15 +50,14 @@ func NewPostgresSchemaAdapter(eventsTableName string, marshaler repository.Event
 
 func (p postgresSchemaAdapter) InitializeSchema(ctx context.Context, db database) error {
 	q := `
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS %s (
-		id serial NOT NULL,
-		aggregate_id varchar(36) NOT NULL, -- assuming uuid will be used; if you have a different id, implement your own adapter
+		id serial NOT NULL PRIMARY KEY,
+		aggregate_id uuid NOT NULL, -- assuming uuid will be used; if you have a different id, implement your own adapter
 		event_name varchar(255) NOT NULL,
-		event_payload BYTEA NOT NULL,
-		event_payload_debug JSON,
-		stored_at TIMESTAMP NOT NULL DEFAULT NOW(),
-	
-		PRIMARY KEY (id)
+		event_payload BYTEA NOT NULL, -- event_payload is there to efficiently (un)marshal the event's contents
+		event_payload_debug JSON, -- event_payload_debug is just there to look up the payload because BYTEA is hard to read
+		stored_at TIMESTAMP NOT NULL DEFAULT NOW()
 );`
 
 	_, err := db.ExecContext(ctx, fmt.Sprintf(q, p.EventsTableName))

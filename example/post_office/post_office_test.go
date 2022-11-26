@@ -12,6 +12,7 @@ import (
 	"github.com/ThreeDotsLabs/esja/pkg/repository/sql"
 
 	stdSQL "database/sql"
+
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
@@ -75,12 +76,10 @@ func TestPostcard_Repositories(t *testing.T) {
 				require.NoError(t, err)
 
 				marshaler := repository.NewEventsMarshaler(
-					post_office.Addressed{},
-					post_office.Received{},
-					post_office.Sent{},
-					post_office.Stamped{},
 					post_office.Created{},
+					post_office.Addressed{},
 					post_office.Written{},
+					post_office.Sent{},
 				)
 
 				schemaAdapter := sql.NewPostgresSchemaAdapter("events", marshaler)
@@ -108,13 +107,13 @@ func TestPostcard_Repositories(t *testing.T) {
 
 			ctx := context.Background()
 
-			fromRepo, err := tc.repository.Load(ctx, aggregate.ID(id))
+			_, err = tc.repository.Load(ctx, aggregate.ID(id))
 			assert.ErrorIs(t, err, repository.ErrAggregateNotFound, "expected aggregate not found yet")
 
 			err = tc.repository.Save(ctx, postcard)
 			require.NoError(t, err, "should save the aggregate and it has some events already")
 
-			fromRepo, err = tc.repository.Load(ctx, aggregate.ID(id))
+			fromRepo, err := tc.repository.Load(ctx, aggregate.ID(id))
 			assert.NoError(t, err, "should retrieve the aggregate, some events should have been saved")
 
 			assert.Equal(t, postcard.ID(), fromRepo.ID())

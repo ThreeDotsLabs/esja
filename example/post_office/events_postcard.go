@@ -54,22 +54,6 @@ func (p *Postcard) handleWritten(e Written) {
 	p.content = e.content
 }
 
-type Stamped struct {
-	StampValue int
-}
-
-func (Stamped) EventName() event.Name {
-	return "Stamped_v1"
-}
-
-func (Stamped) New() event.Event {
-	return Stamped{}
-}
-
-func (p *Postcard) handleStamped(e Stamped) {
-	p.stamped = true
-}
-
 type Sent struct{}
 
 func (Sent) EventName() event.Name {
@@ -82,18 +66,4 @@ func (Sent) New() event.Event {
 
 func (p *Postcard) handleSent(e Sent) {
 	p.sent = true
-}
-
-type Received struct{}
-
-func (Received) EventName() event.Name {
-	return "Received_v1"
-}
-
-func (Received) New() event.Event {
-	return Received{}
-}
-
-func (p *Postcard) handleReceived(e Received) {
-	p.received = true
 }

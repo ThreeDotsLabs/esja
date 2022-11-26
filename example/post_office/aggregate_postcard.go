@@ -17,9 +17,7 @@ type Postcard struct {
 
 	content string
 
-	stamped  bool
-	sent     bool
-	received bool
+	sent bool
 }
 
 func NewPostcard(id string) (*Postcard, error) {
@@ -62,16 +60,8 @@ func (p *Postcard) Content() string {
 	return p.content
 }
 
-func (p *Postcard) Stamped() bool {
-	return p.stamped
-}
-
 func (p *Postcard) Sent() bool {
 	return p.sent
-}
-
-func (p *Postcard) Received() bool {
-	return p.received
 }
 
 func NewPostcardFromEvents(events []event.Event) (*Postcard, error) {
@@ -94,12 +84,8 @@ func (p *Postcard) handle(event event.Event) error {
 		p.handleAddressed(e)
 	case Written:
 		p.handleWritten(e)
-	case Stamped:
-		p.handleStamped(e)
 	case Sent:
 		p.handleSent(e)
-	case Received:
-		p.handleReceived(e)
 	default:
 		return fmt.Errorf("don't know how to handle event '%s'", event.EventName())
 	}

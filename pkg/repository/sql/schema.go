@@ -58,17 +58,13 @@ CREATE TABLE IF NOT EXISTS %s (
 		event_payload BYTEA NOT NULL, -- event_payload is there to efficiently (un)marshal the event's contents
 		event_payload_debug JSON, -- event_payload_debug is just there to look up the payload because BYTEA is hard to read
 		stored_at TIMESTAMP NOT NULL DEFAULT NOW()
-);`
+);
+CREATE INDEX IF NOT EXISTS idx_aggregate_id ON %s ( aggregate_id );
+`
 
-	_, err := db.ExecContext(ctx, fmt.Sprintf(q, p.EventsTableName))
+	_, err := db.ExecContext(ctx, fmt.Sprintf(q, p.EventsTableName, p.EventsTableName))
 	if err != nil {
 		return fmt.Errorf("error initializing schema with postgresSchemaAdapter: %w", err)
-	}
-
-	q = `CREATE INDEX IF NOT EXISTS idx_aggregate_id ON %s ( aggregate_id );`
-	_, err = db.ExecContext(ctx, fmt.Sprintf(q, p.EventsTableName))
-	if err != nil {
-		return fmt.Errorf("error creating index with postgresSchemaAdapter: %w", err)
 	}
 
 	return nil
@@ -141,7 +137,7 @@ FROM "%s"
 WHERE aggregate_id = $1 
 ORDER BY id ASC;
 `
-	results, err := db.QueryContext(ctx, fmt.Sprintf(q, p.EventsTableName), string(id))
+	results, err := db.QueryContext(ctx, fmt.Sprintf(q, p.EventsTableName), id.String())
 	if err != nil {
 		return nil, fmt.Errorf("error retrieving rows for events with postgresSchemaAdapter: %w", err)
 	}

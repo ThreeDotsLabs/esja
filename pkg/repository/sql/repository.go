@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ThreeDotsLabs/esja/pkg/event"
 	"time"
+
+	"github.com/ThreeDotsLabs/esja/pkg/event"
 
 	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
 	"github.com/ThreeDotsLabs/esja/pkg/repository"
@@ -45,7 +46,10 @@ func NewRepository[T aggregate.EventSourced](
 	}, nil
 }
 
-func (r Repository[T]) Load(ctx context.Context, id aggregate.ID) (T, error) {
+func (r Repository[T]) Load(
+	ctx context.Context,
+	id aggregate.ID,
+) (T, error) {
 	var agg T
 
 	events, err := r.schemaAdapter.EventsForAggregate(ctx, r.db, id)
@@ -56,7 +60,10 @@ func (r Repository[T]) Load(ctx context.Context, id aggregate.ID) (T, error) {
 	return r.constructor(events)
 }
 
-func (r Repository[T]) Save(ctx context.Context, agg T) error {
+func (r Repository[T]) Save(
+	ctx context.Context,
+	agg T,
+) error {
 	events := agg.PopEvents()
 
 	err := r.schemaAdapter.InsertEvents(ctx, r.db, agg.AggregateID(), events...)

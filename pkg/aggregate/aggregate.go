@@ -1,49 +1,49 @@
 package aggregate
 
-import (
-	"github.com/ThreeDotsLabs/esja/pkg/event"
-)
-
-// Aggregate stores events.
-// In order for your aggregate to implement EventSourced, make it implement `AggregateID`
-// and embed Aggregate, like this:
+// Aggregate represents the type saved and loaded by the repository.
 //
-// type MyAggregate struct {
-// 		aggregate.Aggregate
-//  	id string
-// }
+// In order for your domain type to implement Aggregate:
+//   * Embed EventStore
+//   * Implement `AggregateID` returning a unique identifier (usually the same as your aggregate's internal ID).
+//   * Implement `FromEvents` to apply events to your aggregate.
+//   * Implement `PopEvents` that returns the events recorded by the EventStore.
 //
-// func (a MyAggregate) AggregateID() aggregate.ID {
-// 		return aggregate.ID(a.id)
-// }
+// Example:
+//
+//     type MyAggregate struct {
+//         es aggregate.EventStore[*MyAggregate]
+//         id string
+//     }
+//
+//     func (a *MyAggregate) AggregateID() aggregate.ID {
+//         return aggregate.ID(a.id)
+//     }
+//
+//     func (a *MyAggregate) PopEvents() []aggregate.VersionedEvent[*MyAggregate] {
+//         return p.es.PopEvents()
+//     }
+//
+//     func (a *MyAggregate) FromEvents(events []aggregate.VersionedEvent[*MyAggregate]) error {
+//         es, err := aggregate.NewEventStoreFromEvents(a, events)
+//         if err != nil {
+//             return err
+//         }
+//
+//         p.es = es
+//
+//         return nil
+//     }
 //
 // Then repository.Repository will be able to store and load it.
-type Aggregate struct {
-	id          ID
-	version     int
-	eventsQueue []event.Event
-}
-
-type EventSourced interface {
+type Aggregate[A any] interface {
 	AggregateID() ID
-	PopEvents() []event.Event
+	PopEvents() []VersionedEvent[A]
+	FromEvents(events []VersionedEvent[A]) error
 }
 
-// PopEvents returns the events recorded so far and clears the events queue.
-func (a *Aggregate) PopEvents() []event.Event {
-	var tmp = make([]event.Event, len(a.eventsQueue))
-	copy(tmp, a.eventsQueue)
-	a.eventsQueue = []event.Event{}
+// ID is the unique identifier of an aggregate.
+type ID string
 
-	return tmp
-}
-
-// RecordEvent puts a new event.Event on the events queue.
-func (a *Aggregate) RecordEvent(ev event.Event) {
-	a.version += 1
-	a.eventsQueue = append(a.eventsQueue, ev)
-}
-
-func (a Aggregate) Version() int {
-	return a.version
+func (i ID) String() string {
+	return string(i)
 }

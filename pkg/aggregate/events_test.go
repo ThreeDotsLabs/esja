@@ -22,21 +22,21 @@ func (e Event) Apply(a Aggregate) error {
 	return nil
 }
 
-func TestNewEventStore(t *testing.T) {
+func TestNewEventsQueue(t *testing.T) {
 	agg := Aggregate{}
 
 	event1 := Event{ID: 1}
 	event2 := Event{ID: 2}
 
-	es := aggregate.NewEventStore(agg)
+	es := aggregate.NewEventsQueue(agg)
 
 	events := es.PopEvents()
 	assert.Len(t, events, 0)
 
-	err := es.Record(event1)
+	err := es.PushAndApply(event1)
 	assert.NoError(t, err)
 
-	err = es.Record(event2)
+	err = es.PushAndApply(event2)
 	assert.NoError(t, err)
 
 	events = es.PopEvents()
@@ -53,7 +53,7 @@ func TestNewEventStore(t *testing.T) {
 
 	event3 := Event{ID: 3}
 
-	err = es.Record(event3)
+	err = es.PushAndApply(event3)
 	assert.NoError(t, err)
 
 	events = es.PopEvents()

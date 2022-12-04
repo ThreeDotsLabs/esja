@@ -51,9 +51,9 @@ func TestPostcard_Lifecycle(t *testing.T) {
 	assert.Len(events, 3)
 
 	expectedEvents := []aggregate.VersionedEvent[*postcard.Postcard]{
-		{Event: postcard.Created{ID: id}, AggregateVersion: 1},
-		{Event: postcard.Addressed{Sender: senderAddress, Addressee: addresseeAddress}, AggregateVersion: 2},
-		{Event: postcard.Written{Content: "content"}, AggregateVersion: 3},
+		{Event: &postcard.Created{ID: id}, AggregateVersion: 1},
+		{Event: &postcard.Addressed{Sender: senderAddress, Addressee: addresseeAddress}, AggregateVersion: 2},
+		{Event: &postcard.Written{Content: "content"}, AggregateVersion: 3},
 	}
 	assert.Equal(expectedEvents, events)
 
@@ -83,8 +83,8 @@ func TestPostcard_Lifecycle(t *testing.T) {
 	assert.Len(events, 2)
 
 	expectedEvents = []aggregate.VersionedEvent[*postcard.Postcard]{
-		{Event: postcard.Written{Content: "new content"}, AggregateVersion: 4},
-		{Event: postcard.Sent{}, AggregateVersion: 5},
+		{Event: &postcard.Written{Content: "new content"}, AggregateVersion: 4},
+		{Event: &postcard.Sent{}, AggregateVersion: 5},
 	}
 
 	assert.Equal(expectedEvents, events)

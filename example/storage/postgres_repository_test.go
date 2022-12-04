@@ -15,6 +15,7 @@ import (
 	"github.com/ThreeDotsLabs/esja/example/storage"
 	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
 	"github.com/ThreeDotsLabs/esja/pkg/repository"
+	"github.com/ThreeDotsLabs/esja/pkg/repository/inmemory"
 )
 
 var (
@@ -39,24 +40,47 @@ const (
 )
 
 func TestPostcard_Repositories(t *testing.T) {
+	conn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
+	db, err := sql.Open("postgres", conn)
+	require.NoError(t, err)
+
 	testCases := []struct {
 		name       string
 		repository repository.Repository[*postcard.Postcard]
 	}{
 		{
 			name:       "in_memory",
-			repository: repository.NewInMemoryRepository[*postcard.Postcard](),
+			repository: inmemory.NewRepository[*postcard.Postcard](),
 		},
 		{
-			name: "postgres",
+			name: "postgres_simple",
 			repository: func() repository.Repository[*postcard.Postcard] {
-				conn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-				db, err := sql.Open("postgres", conn)
+				repo, err := storage.NewSimplePostcardRepository(context.Background(), db)
 				require.NoError(t, err)
-
-				repo, err := storage.NewPostcardRepository(context.Background(), db)
+				return repo
+			}(),
+		},
+		{
+			name: "postgres_simple_anonymized",
+			repository: func() repository.Repository[*postcard.Postcard] {
+				repo, err := storage.NewSimpleAnonymizingPostcardRepository(context.Background(), db)
 				require.NoError(t, err)
-
+				return repo
+			}(),
+		},
+		{
+			name: "postgres_mapping",
+			repository: func() repository.Repository[*postcard.Postcard] {
+				repo, err := storage.NewMappingPostcardRepository(context.Background(), db)
+				require.NoError(t, err)
+				return repo
+			}(),
+		},
+		{
+			name: "postgres_mapping_anonymized",
+			repository: func() repository.Repository[*postcard.Postcard] {
+				repo, err := storage.NewMappingAnonymizingPostcardRepository(context.Background(), db)
+				require.NoError(t, err)
 				return repo
 			}(),
 		},
@@ -122,7 +146,6 @@ func TestPostcard_Repositories(t *testing.T) {
 			assert.Equal(t, "content", fromRepo3.Content())
 			assert.True(t, fromRepo3.Sent())
 			assert.Empty(t, fromRepo3.PopEvents())
-
 		})
 	}
 }

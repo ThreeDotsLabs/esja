@@ -24,48 +24,48 @@ type VersionedEvent[A any] struct {
 	AggregateVersion int
 }
 
-// EventStore stores events.
-type EventStore[A any] struct {
+// EventsQueue stores events.
+type EventsQueue[A any] struct {
 	aggregate A
 	version   int
 	queue     []VersionedEvent[A]
 }
 
-// NewEventStore creates a new EventStore with empty events queue.
-func NewEventStore[A any](aggregate A) EventStore[A] {
-	return EventStore[A]{
+// NewEventsQueue creates a new empty EventsQueue.
+func NewEventsQueue[A any](aggregate A) EventsQueue[A] {
+	return EventsQueue[A]{
 		aggregate: aggregate,
 		version:   0,
 		queue:     []VersionedEvent[A]{},
 	}
 }
 
-// NewEventStoreFromEvents creates a new EventStore from given events.
+// NewEventsQueueFromEvents creates a new EventsQueue from given events.
 // The events are applied to the aggregate.
 // The version is set to the last event's version.
-func NewEventStoreFromEvents[A any](aggregate A, events []VersionedEvent[A]) (EventStore[A], error) {
+func NewEventsQueueFromEvents[A any](aggregate A, events []VersionedEvent[A]) (EventsQueue[A], error) {
 	if len(events) == 0 {
-		return EventStore[A]{}, fmt.Errorf("no events to load")
+		return EventsQueue[A]{}, fmt.Errorf("no events to load")
 	}
 
 	for _, ev := range events {
 		err := ev.Apply(aggregate)
 		if err != nil {
-			return EventStore[A]{}, err
+			return EventsQueue[A]{}, err
 		}
 	}
 
 	version := events[len(events)-1].AggregateVersion
 
-	return EventStore[A]{
+	return EventsQueue[A]{
 		aggregate: aggregate,
 		version:   version,
 		queue:     []VersionedEvent[A]{},
 	}, nil
 }
 
-// Record puts a new Event on the events queue and applies it to the aggregate.
-func (e *EventStore[A]) Record(event Event[A]) error {
+// PushAndApply puts a new Event on the queue and applies it to the aggregate.
+func (e *EventsQueue[A]) PushAndApply(event Event[A]) error {
 	e.version += 1
 	e.queue = append(e.queue, VersionedEvent[A]{
 		Event:            event,
@@ -75,8 +75,8 @@ func (e *EventStore[A]) Record(event Event[A]) error {
 	return event.Apply(e.aggregate)
 }
 
-// PopEvents returns the events recorded so far and clears the events queue.
-func (e *EventStore[A]) PopEvents() []VersionedEvent[A] {
+// PopEvents returns the events on the queue and clears it.
+func (e *EventsQueue[A]) PopEvents() []VersionedEvent[A] {
 	var tmp = make([]VersionedEvent[A], len(e.queue))
 	copy(tmp, e.queue)
 	e.queue = []VersionedEvent[A]{}

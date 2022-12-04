@@ -3,15 +3,15 @@ package aggregate
 // Aggregate represents the type saved and loaded by the repository.
 //
 // In order for your domain type to implement Aggregate:
-//   * Embed EventStore
+//   * Embed EventsQueue
 //   * Implement `AggregateID` returning a unique identifier (usually the same as your aggregate's internal ID).
 //   * Implement `FromEvents` to apply events to your aggregate.
-//   * Implement `PopEvents` that returns the events recorded by the EventStore.
+//   * Implement `PopEvents` that returns the events on the EventsQueue.
 //
 // Example:
 //
 //     type MyAggregate struct {
-//         es aggregate.EventStore[*MyAggregate]
+//         es aggregate.EventsQueue[*MyAggregate]
 //         id string
 //     }
 //
@@ -24,7 +24,7 @@ package aggregate
 //     }
 //
 //     func (a *MyAggregate) FromEvents(events []aggregate.VersionedEvent[*MyAggregate]) error {
-//         es, err := aggregate.NewEventStoreFromEvents(a, events)
+//         es, err := aggregate.NewEventsQueueFromEvents(a, events)
 //         if err != nil {
 //             return err
 //         }

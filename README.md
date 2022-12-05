@@ -1,6 +1,6 @@
 # esja
 
-[![CI Status](https://github.com/ThreeDotsLabs/esja/actions/workflows/master.yml/badge.svg)](https://github.com/ThreeDotsLabs/esja/actions/workflows/master.yml)
+[![CI Status](https://github.com/ThreeDotsLabs/esja/actions/workflows/ci.yml/badge.svg)](https://github.com/ThreeDotsLabs/esja/actions/workflows/ci.yml)
 
 EventSourcing library in Go.
 

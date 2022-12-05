@@ -18,11 +18,11 @@ func NewSimplePostcardRepository(ctx context.Context, db *sql.DB) (sql2.Reposito
 		sql2.NewPostgresSchemaAdapter[*postcard.Postcard]("PostcardSimple"),
 		sql2.NewSimpleSerializer(
 			sql2.JSONMarshaler{},
-			[]sql2.EventConstructor[*postcard.Postcard]{
-				func() aggregate.Event[*postcard.Postcard] { return &postcard.Created{} },
-				func() aggregate.Event[*postcard.Postcard] { return &postcard.Addressed{} },
-				func() aggregate.Event[*postcard.Postcard] { return &postcard.Written{} },
-				func() aggregate.Event[*postcard.Postcard] { return &postcard.Sent{} },
+			[]aggregate.Event[*postcard.Postcard]{
+				postcard.Created{},
+				postcard.Addressed{},
+				postcard.Written{},
+				postcard.Sent{},
 			}),
 	)
 }
@@ -37,11 +37,11 @@ func NewSimpleAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (sq
 				sql2.JSONMarshaler{},
 				sql2.NewAESAnonymizer(ConstantSecretProvider{}),
 			),
-			[]sql2.EventConstructor[*postcard.Postcard]{
-				func() aggregate.Event[*postcard.Postcard] { return &postcard.Created{} },
-				func() aggregate.Event[*postcard.Postcard] { return &postcard.Addressed{} },
-				func() aggregate.Event[*postcard.Postcard] { return &postcard.Written{} },
-				func() aggregate.Event[*postcard.Postcard] { return &postcard.Sent{} },
+			[]aggregate.Event[*postcard.Postcard]{
+				postcard.Created{},
+				postcard.Addressed{},
+				postcard.Written{},
+				postcard.Sent{},
 			}),
 	)
 }

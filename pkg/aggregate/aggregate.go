@@ -47,3 +47,14 @@ type ID string
 func (i ID) String() string {
 	return string(i)
 }
+
+func Record[A any](agg A, eq EventsQueue[A], e Event[A]) error {
+	err := e.Apply(agg)
+	if err != nil {
+		return err
+	}
+
+	eq.Record(e)
+
+	return nil
+}

@@ -22,7 +22,7 @@ type Postcard struct {
 func NewPostcard(id string) (*Postcard, error) {
 	p := &Postcard{}
 
-	err := p.record(&Created{
+	err := aggregate.Record(p, p.eq, &Created{
 		ID: id,
 	})
 	if err != nil {
@@ -60,13 +60,13 @@ func (p *Postcard) AggregateID() aggregate.ID {
 }
 
 func (p *Postcard) Write(content string) error {
-	return p.record(&Written{
+	return aggregate.Record(p, p.eq, &Written{
 		Content: content,
 	})
 }
 
 func (p *Postcard) Address(sender Address, addressee Address) error {
-	return p.record(&Addressed{
+	return aggregate.Record(p, p.eq, &Addressed{
 		Sender:    sender,
 		Addressee: addressee,
 	})
@@ -77,7 +77,7 @@ func (p *Postcard) Send() error {
 		return fmt.Errorf("postcard already sent")
 	}
 
-	return p.record(&Sent{})
+	return aggregate.Record(p, p.eq, &Sent{})
 }
 
 func (p *Postcard) Sender() Address {
@@ -94,15 +94,4 @@ func (p *Postcard) Content() string {
 
 func (p *Postcard) Sent() bool {
 	return p.sent
-}
-
-func (p *Postcard) record(e aggregate.Event[*Postcard]) error {
-	err := e.Apply(p)
-	if err != nil {
-		return err
-	}
-
-	p.eq.Record(e)
-
-	return nil
 }

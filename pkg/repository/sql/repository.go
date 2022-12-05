@@ -36,9 +36,8 @@ type schemaAdapter[A any] interface {
 
 // Repository is an implementation of the Repository interface using an SQL database.
 type Repository[T any] struct {
-	db            ContextExecutor
-	schemaAdapter schemaAdapter[T]
-	serializer    EventSerializer[T]
+	db     ContextExecutor
+	config Config[T]
 }
 
 // NewRepository creates a new Repository.
@@ -47,17 +46,15 @@ type Repository[T any] struct {
 func NewRepository[T any](
 	ctx context.Context,
 	db ContextExecutor,
-	schemaAdapter schemaAdapter[T],
-	serializer EventSerializer[T],
+	config Config[T],
 ) (Repository[T], error) {
 	if db == nil {
 		return Repository[T]{}, errors.New("db must not be nil")
 	}
 
 	r := Repository[T]{
-		db:            db,
-		schemaAdapter: schemaAdapter,
-		serializer:    serializer,
+		db:     db,
+		config: config,
 	}
 
 	err := r.initializeSchema(ctx)
@@ -69,7 +66,7 @@ func NewRepository[T any](
 }
 
 func (r Repository[T]) initializeSchema(ctx context.Context) error {
-	query := r.schemaAdapter.InitializeSchemaQuery()
+	query := r.config.SchemaAdapter.InitializeSchemaQuery()
 	_, err := r.db.ExecContext(ctx, query)
 	if err != nil {
 		return fmt.Errorf("error initializing schema: %w", err)
@@ -80,7 +77,7 @@ func (r Repository[T]) initializeSchema(ctx context.Context) error {
 // Load loads the aggregate from the database events.
 // The target should be a pointer to the aggregate.
 func (r Repository[T]) Load(ctx context.Context, id aggregate.ID, target aggregate.Aggregate[T]) error {
-	query, args, err := r.schemaAdapter.SelectQuery(id.String())
+	query, args, err := r.config.SchemaAdapter.SelectQuery(id.String())
 	if err != nil {
 		return fmt.Errorf("error building select query: %w", err)
 	}
@@ -106,7 +103,7 @@ func (r Repository[T]) Load(ctx context.Context, id aggregate.ID, target aggrega
 			return fmt.Errorf("error reading row result: %w", err)
 		}
 
-		event, err := r.serializer.Deserialize(aggregateID, eventName, eventPayload)
+		event, err := r.config.Serializer.Deserialize(aggregateID, eventName, eventPayload)
 		if err != nil {
 			return fmt.Errorf("error deserializing event: %w", err)
 		}
@@ -134,7 +131,7 @@ func (r Repository[T]) Save(ctx context.Context, agg aggregate.Aggregate[T]) (er
 
 	serializedEvents := make([]storageEvent[T], len(events))
 	for i, event := range events {
-		payload, err := r.serializer.Serialize(agg.AggregateID(), event.Event)
+		payload, err := r.config.Serializer.Serialize(agg.AggregateID(), event.Event)
 		if err != nil {
 			return fmt.Errorf("error serializing event: %w", err)
 		}
@@ -146,7 +143,7 @@ func (r Repository[T]) Save(ctx context.Context, agg aggregate.Aggregate[T]) (er
 		}
 	}
 
-	query, args, err := r.schemaAdapter.InsertQuery(serializedEvents)
+	query, args, err := r.config.SchemaAdapter.InsertQuery(serializedEvents)
 	if err != nil {
 		return fmt.Errorf("error building insert query: %w", err)
 	}

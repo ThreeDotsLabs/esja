@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"database/sql"
-
 	"github.com/ThreeDotsLabs/esja/example/aggregate/postcard"
 	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
 	sql2 "github.com/ThreeDotsLabs/esja/pkg/repository/sql"
@@ -31,17 +30,17 @@ func NewMappingAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (s
 		ctx,
 		db,
 		sql2.NewPostgresSchemaAdapter[*postcard.Postcard]("PostcardMappingAnonymizing"),
-		sql2.NewMappingSerializer(
-			sql2.NewAnonymizingMarshaler(
+		sql2.NewAESAnonymizingSerializer[*postcard.Postcard](
+			sql2.NewMappingSerializer[*postcard.Postcard](
 				sql2.JSONMarshaler{},
-				sql2.NewAESAnonymizer(ConstantSecretProvider{}),
+				[]sql2.EventMapper[*postcard.Postcard]{
+					CreatedMapper{},
+					AddressedMapper{},
+					WrittenMapper{},
+					SentMapper{},
+				},
 			),
-			[]sql2.EventMapper[*postcard.Postcard]{
-				CreatedMapper{},
-				AddressedMapper{},
-				WrittenMapper{},
-				SentMapper{},
-			},
+			ConstantSecretProvider{},
 		),
 	)
 }

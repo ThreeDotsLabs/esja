@@ -32,23 +32,24 @@ func NewSimpleAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (sq
 		ctx,
 		db,
 		sql2.NewPostgresSchemaAdapter[*postcard.Postcard]("PostcardSimpleAnonymizing"),
-		sql2.NewSimpleSerializer(
-			sql2.NewAnonymizingMarshaler(
+		sql2.NewAESAnonymizingSerializer[*postcard.Postcard](
+			sql2.NewSimpleSerializer[*postcard.Postcard](
 				sql2.JSONMarshaler{},
-				sql2.NewAESAnonymizer(ConstantSecretProvider{}),
+				[]aggregate.Event[*postcard.Postcard]{
+					postcard.Created{},
+					postcard.Addressed{},
+					postcard.Written{},
+					postcard.Sent{},
+				},
 			),
-			[]aggregate.Event[*postcard.Postcard]{
-				postcard.Created{},
-				postcard.Addressed{},
-				postcard.Written{},
-				postcard.Sent{},
-			}),
+			ConstantSecretProvider{},
+		),
 	)
 }
 
 type ConstantSecretProvider struct{}
 
-func (c ConstantSecretProvider) SecretForAggregate(aggregateID aggregate.ID) ([]byte, error) {
+func (c ConstantSecretProvider) SecretForKey(aggregateID aggregate.ID) ([]byte, error) {
 	h, err := hex.DecodeString(strings.ReplaceAll(aggregateID.String(), "-", ""))
 	if err != nil {
 		return nil, err

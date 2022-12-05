@@ -1,6 +1,10 @@
 package sql
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
+)
 
 type Config[T any] struct {
 	SchemaAdapter schemaAdapter[T]
@@ -17,9 +21,20 @@ func (c Config[T]) validate() error {
 	return nil
 }
 
-func NewConfig[T any](schemaAdapter schemaAdapter[T], serializer EventSerializer[T]) Config[T] {
+func NewPostgresConfig[T any](
+	supportedEvents []aggregate.Event[T],
+) Config[T] {
 	return Config[T]{
-		SchemaAdapter: schemaAdapter,
-		Serializer:    serializer,
+		SchemaAdapter: NewPostgresSchemaAdapter[T](""),
+		Serializer:    NewSimpleSerializer(JSONMarshaler{}, supportedEvents),
+	}
+}
+
+func NewMappingPostgresConfig[T any](
+	eventMappers []EventMapper[T],
+) Config[T] {
+	return Config[T]{
+		SchemaAdapter: NewPostgresSchemaAdapter[T](""),
+		Serializer:    NewMappingSerializer[T](JSONMarshaler{}, eventMappers),
 	}
 }

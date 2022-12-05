@@ -52,12 +52,17 @@ func NewRepository[T any](
 		return Repository[T]{}, errors.New("db must not be nil")
 	}
 
+	err := config.validate()
+	if err != nil {
+		return Repository[T]{}, fmt.Errorf("invalid config: %w", err)
+	}
+
 	r := Repository[T]{
 		db:     db,
 		config: config,
 	}
 
-	err := r.initializeSchema(ctx)
+	err = r.initializeSchema(ctx)
 	if err != nil {
 		return Repository[T]{}, err
 	}

@@ -9,13 +9,11 @@ import (
 	sql2 "github.com/ThreeDotsLabs/esja/pkg/repository/sql"
 )
 
-func NewMappingPostcardRepository(ctx context.Context, db *sql.DB) (sql2.Repository[*postcard.Postcard], error) {
+func NewDefaultMappingPostgresRepository(ctx context.Context, db *sql.DB) (sql2.Repository[*postcard.Postcard], error) {
 	return sql2.NewRepository[*postcard.Postcard](
 		ctx,
 		db,
-		sql2.NewPostgresSchemaAdapter[*postcard.Postcard]("PostcardMapping"),
-		sql2.NewMappingSerializer(
-			sql2.JSONMarshaler{},
+		sql2.NewMappingPostgresConfig[*postcard.Postcard](
 			[]sql2.EventMapper[*postcard.Postcard]{
 				CreatedMapper{},
 				AddressedMapper{},
@@ -26,13 +24,13 @@ func NewMappingPostcardRepository(ctx context.Context, db *sql.DB) (sql2.Reposit
 	)
 }
 
-func NewMappingAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (sql2.Repository[*postcard.Postcard], error) {
+func NewCustomMappingPostcardRepository(ctx context.Context, db *sql.DB) (sql2.Repository[*postcard.Postcard], error) {
 	return sql2.NewRepository[*postcard.Postcard](
 		ctx,
 		db,
-		sql2.NewPostgresSchemaAdapter[*postcard.Postcard]("PostcardMappingAnonymizing"),
-		sql2.NewAESAnonymizingSerializer[*postcard.Postcard](
-			sql2.NewMappingSerializer[*postcard.Postcard](
+		sql2.Config[*postcard.Postcard]{
+			SchemaAdapter: sql2.NewPostgresSchemaAdapter[*postcard.Postcard]("PostcardMapping"),
+			Serializer: sql2.NewMappingSerializer(
 				sql2.JSONMarshaler{},
 				[]sql2.EventMapper[*postcard.Postcard]{
 					CreatedMapper{},
@@ -41,8 +39,29 @@ func NewMappingAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (s
 					SentMapper{},
 				},
 			),
-			ConstantSecretProvider{},
-		),
+		},
+	)
+}
+
+func NewMappingAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (sql2.Repository[*postcard.Postcard], error) {
+	return sql2.NewRepository[*postcard.Postcard](
+		ctx,
+		db,
+		sql2.Config[*postcard.Postcard]{
+			SchemaAdapter: sql2.NewPostgresSchemaAdapter[*postcard.Postcard]("PostcardMappingAnonymizing"),
+			Serializer: sql2.NewAESAnonymizingSerializer[*postcard.Postcard](
+				sql2.NewMappingSerializer[*postcard.Postcard](
+					sql2.JSONMarshaler{},
+					[]sql2.EventMapper[*postcard.Postcard]{
+						CreatedMapper{},
+						AddressedMapper{},
+						WrittenMapper{},
+						SentMapper{},
+					},
+				),
+				ConstantSecretProvider{},
+			),
+		},
 	)
 }
 

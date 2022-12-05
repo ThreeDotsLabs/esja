@@ -11,29 +11,28 @@ import (
 	sql2 "github.com/ThreeDotsLabs/esja/pkg/repository/sql"
 )
 
-func NewSimplePostcardRepository(ctx context.Context, db *sql.DB) (sql2.Repository[*postcard.Postcard], error) {
+func NewDefaultSimplePostcardRepository(ctx context.Context, db *sql.DB) (sql2.Repository[*postcard.Postcard], error) {
 	return sql2.NewRepository[*postcard.Postcard](
 		ctx,
 		db,
-		sql2.NewPostgresSchemaAdapter[*postcard.Postcard]("PostcardSimple"),
-		sql2.NewSimpleSerializer(
-			sql2.JSONMarshaler{},
+		sql2.NewPostgresConfig[*postcard.Postcard](
 			[]aggregate.Event[*postcard.Postcard]{
 				postcard.Created{},
 				postcard.Addressed{},
 				postcard.Written{},
 				postcard.Sent{},
-			}),
+			},
+		),
 	)
 }
 
-func NewSimpleAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (sql2.Repository[*postcard.Postcard], error) {
+func NewCustomSimplePostcardRepository(ctx context.Context, db *sql.DB) (sql2.Repository[*postcard.Postcard], error) {
 	return sql2.NewRepository[*postcard.Postcard](
 		ctx,
 		db,
-		sql2.NewPostgresSchemaAdapter[*postcard.Postcard]("PostcardSimpleAnonymizing"),
-		sql2.NewAESAnonymizingSerializer[*postcard.Postcard](
-			sql2.NewSimpleSerializer[*postcard.Postcard](
+		sql2.Config[*postcard.Postcard]{
+			SchemaAdapter: sql2.NewPostgresSchemaAdapter[*postcard.Postcard]("PostcardSimple"),
+			Serializer: sql2.NewSimpleSerializer(
 				sql2.JSONMarshaler{},
 				[]aggregate.Event[*postcard.Postcard]{
 					postcard.Created{},
@@ -42,8 +41,29 @@ func NewSimpleAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (sq
 					postcard.Sent{},
 				},
 			),
-			ConstantSecretProvider{},
-		),
+		},
+	)
+}
+
+func NewSimpleAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (sql2.Repository[*postcard.Postcard], error) {
+	return sql2.NewRepository[*postcard.Postcard](
+		ctx,
+		db,
+		sql2.Config[*postcard.Postcard]{
+			SchemaAdapter: sql2.NewPostgresSchemaAdapter[*postcard.Postcard]("PostcardSimpleAnonymizing"),
+			Serializer: sql2.NewAESAnonymizingSerializer[*postcard.Postcard](
+				sql2.NewSimpleSerializer[*postcard.Postcard](
+					sql2.JSONMarshaler{},
+					[]aggregate.Event[*postcard.Postcard]{
+						postcard.Created{},
+						postcard.Addressed{},
+						postcard.Written{},
+						postcard.Sent{},
+					},
+				),
+				ConstantSecretProvider{},
+			),
+		},
 	)
 }
 

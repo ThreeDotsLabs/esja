@@ -38,7 +38,7 @@ package aggregate
 type Aggregate[A any] interface {
 	AggregateID() ID
 	PopEvents() []VersionedEvent[A]
-	FromEvents(events []VersionedEvent[A]) error
+	FromEventsQueue(eq EventsQueue[A]) error
 }
 
 // ID is the unique identifier of an aggregate.

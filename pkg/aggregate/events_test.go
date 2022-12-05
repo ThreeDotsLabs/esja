@@ -23,21 +23,16 @@ func (e Event) Apply(a Aggregate) error {
 }
 
 func TestNewEventsQueue(t *testing.T) {
-	agg := Aggregate{}
-
 	event1 := Event{ID: 1}
 	event2 := Event{ID: 2}
 
-	es := aggregate.NewEventsQueue(agg)
+	es := aggregate.EventsQueue[Aggregate]{}
 
 	events := es.PopEvents()
 	assert.Len(t, events, 0)
 
-	err := es.PushAndApply(event1)
-	assert.NoError(t, err)
-
-	err = es.PushAndApply(event2)
-	assert.NoError(t, err)
+	es.Record(event1)
+	es.Record(event2)
 
 	events = es.PopEvents()
 	assert.Len(t, events, 2)
@@ -53,8 +48,7 @@ func TestNewEventsQueue(t *testing.T) {
 
 	event3 := Event{ID: 3}
 
-	err = es.PushAndApply(event3)
-	assert.NoError(t, err)
+	es.Record(event3)
 
 	events = es.PopEvents()
 	assert.Len(t, events, 1)

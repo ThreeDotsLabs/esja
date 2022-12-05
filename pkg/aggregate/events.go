@@ -25,54 +25,33 @@ type VersionedEvent[A any] struct {
 }
 
 // EventsQueue stores events.
+// Zero-value is a valid empty queue.
 type EventsQueue[A any] struct {
-	aggregate A
-	version   int
-	queue     []VersionedEvent[A]
+	version int
+	queue   []VersionedEvent[A]
 }
 
-// NewEventsQueue creates a new empty EventsQueue.
-func NewEventsQueue[A any](aggregate A) EventsQueue[A] {
-	return EventsQueue[A]{
-		aggregate: aggregate,
-		version:   0,
-		queue:     []VersionedEvent[A]{},
-	}
-}
-
-// NewEventsQueueFromEvents creates a new EventsQueue from given events.
-// The events are applied to the aggregate.
-// The version is set to the last event's version.
-func NewEventsQueueFromEvents[A any](aggregate A, events []VersionedEvent[A]) (EventsQueue[A], error) {
+// NewEventsQueueFromEvents creates a new EventsQueue with version set to the last event's version.
+func NewEventsQueueFromEvents[A any](events []VersionedEvent[A]) (EventsQueue[A], error) {
 	if len(events) == 0 {
 		return EventsQueue[A]{}, fmt.Errorf("no events to load")
-	}
-
-	for _, ev := range events {
-		err := ev.Apply(aggregate)
-		if err != nil {
-			return EventsQueue[A]{}, err
-		}
 	}
 
 	version := events[len(events)-1].AggregateVersion
 
 	return EventsQueue[A]{
-		aggregate: aggregate,
-		version:   version,
-		queue:     []VersionedEvent[A]{},
+		version: version,
+		queue:   events,
 	}, nil
 }
 
-// PushAndApply puts a new Event on the queue and applies it to the aggregate.
-func (e *EventsQueue[A]) PushAndApply(event Event[A]) error {
+// Record puts a new Event on the queue with proper version.
+func (e *EventsQueue[A]) Record(event Event[A]) {
 	e.version += 1
 	e.queue = append(e.queue, VersionedEvent[A]{
 		Event:            event,
 		AggregateVersion: e.version,
 	})
-
-	return event.Apply(e.aggregate)
 }
 
 // PopEvents returns the events on the queue and clears it.

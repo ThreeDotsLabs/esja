@@ -30,7 +30,12 @@ func (i *Repository[T]) Load(_ context.Context, id aggregate.ID, target aggregat
 		return repository.ErrAggregateNotFound
 	}
 
-	return target.FromEvents(events)
+	eq, err := aggregate.NewEventsQueueFromEvents(events)
+	if err != nil {
+		return err
+	}
+
+	return target.FromEventsQueue(eq)
 }
 
 func (i *Repository[T]) Save(_ context.Context, a aggregate.Aggregate[T]) error {

@@ -81,15 +81,15 @@ func (CreatedMapper) StorageEvent() any {
 }
 
 func (CreatedMapper) ToStorage(event aggregate.Event[*postcard.Postcard]) any {
-	e := event.(*postcard.Created)
-	return &Created{
+	e := event.(postcard.Created)
+	return Created{
 		ID: e.ID,
 	}
 }
 
 func (CreatedMapper) FromStorage(event any) aggregate.Event[*postcard.Postcard] {
 	e := event.(*Created)
-	return &postcard.Created{
+	return postcard.Created{
 		ID: e.ID,
 	}
 }
@@ -110,8 +110,8 @@ func (AddressedMapper) StorageEvent() any {
 }
 
 func (AddressedMapper) ToStorage(event aggregate.Event[*postcard.Postcard]) any {
-	e := event.(*postcard.Addressed)
-	return &Addressed{
+	e := event.(postcard.Addressed)
+	return Addressed{
 		Sender:    Address(e.Sender),
 		Addressee: Address(e.Addressee),
 	}
@@ -119,7 +119,7 @@ func (AddressedMapper) ToStorage(event aggregate.Event[*postcard.Postcard]) any 
 
 func (AddressedMapper) FromStorage(event any) aggregate.Event[*postcard.Postcard] {
 	e := event.(*Addressed)
-	return &postcard.Addressed{
+	return postcard.Addressed{
 		Sender:    postcard.Address(e.Sender),
 		Addressee: postcard.Address(e.Addressee),
 	}
@@ -147,15 +147,15 @@ func (WrittenMapper) StorageEvent() any {
 }
 
 func (WrittenMapper) ToStorage(e aggregate.Event[*postcard.Postcard]) any {
-	ev := e.(*postcard.Written)
-	return &Written{
+	ev := e.(postcard.Written)
+	return Written{
 		Content: ev.Content,
 	}
 }
 
 func (WrittenMapper) FromStorage(event any) aggregate.Event[*postcard.Postcard] {
 	e := event.(*Written)
-	return &postcard.Written{
+	return postcard.Written{
 		Content: e.Content,
 	}
 }

@@ -17,27 +17,27 @@ type testStruct struct {
 }
 
 func TestStructAnonymizer(t *testing.T) {
-	a := pii.NewStructAnonymizer[string](testStringAnonymizer{})
+	a := pii.NewStructAnonymizer[testStruct, string](testStringAnonymizer{})
 
-	s := &testStruct{
+	s := testStruct{
 		FirstName: "John",
 		LastName:  "Doe",
 		Company:   "ThreeDotsLabs",
 	}
 
-	err := a.Anonymize("id", s)
+	anonymized, err := a.Anonymize("id", s)
 	require.NoError(t, err)
 
-	assert.Equal(t, "anonymized.id.John", s.FirstName)
-	assert.Equal(t, "anonymized.id.Doe", s.LastName)
-	assert.Equal(t, "ThreeDotsLabs", s.Company)
+	assert.Equal(t, "anonymized.id.John", anonymized.FirstName)
+	assert.Equal(t, "anonymized.id.Doe", anonymized.LastName)
+	assert.Equal(t, "ThreeDotsLabs", anonymized.Company)
 
-	err = a.Deanonymize("id", s)
+	deanonymized, err := a.Deanonymize("id", anonymized)
 	require.NoError(t, err)
 
-	assert.Equal(t, "John", s.FirstName)
-	assert.Equal(t, "Doe", s.LastName)
-	assert.Equal(t, "ThreeDotsLabs", s.Company)
+	assert.Equal(t, "John", deanonymized.FirstName)
+	assert.Equal(t, "Doe", deanonymized.LastName)
+	assert.Equal(t, "ThreeDotsLabs", deanonymized.Company)
 }
 
 type testStringAnonymizer struct{}

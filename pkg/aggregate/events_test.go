@@ -26,7 +26,7 @@ func TestNewEventsQueue(t *testing.T) {
 	event1 := Event{ID: 1}
 	event2 := Event{ID: 2}
 
-	es := aggregate.EventsQueue[Aggregate]{}
+	es := aggregate.Events[Aggregate]{}
 
 	events := es.PopEvents()
 	assert.Len(t, events, 0)

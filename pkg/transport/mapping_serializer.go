@@ -1,8 +1,7 @@
-package sql
+package transport
 
 import (
 	"fmt"
-
 	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
 )
 

@@ -7,7 +7,7 @@ import (
 )
 
 type Postcard struct {
-	eq aggregate.EventsQueue[*Postcard]
+	events aggregate.Events[*Postcard]
 
 	id string
 
@@ -19,10 +19,17 @@ type Postcard struct {
 	sent bool
 }
 
+type Address struct {
+	Name  string `anonymize:"true"`
+	Line1 string
+	Line2 string
+	Line3 string
+}
+
 func NewPostcard(id string) (*Postcard, error) {
 	p := &Postcard{}
 
-	err := aggregate.Record[*Postcard](p, &p.eq, &Created{
+	err := aggregate.Record[*Postcard](p, &p.events, &Created{
 		ID: id,
 	})
 	if err != nil {
@@ -33,10 +40,10 @@ func NewPostcard(id string) (*Postcard, error) {
 }
 
 func (p *Postcard) PopEvents() []aggregate.VersionedEvent[*Postcard] {
-	return p.eq.PopEvents()
+	return p.events.PopEvents()
 }
 
-func (p *Postcard) FromEventsQueue(eq aggregate.EventsQueue[*Postcard]) error {
+func (p *Postcard) FromEvents(eq aggregate.Events[*Postcard]) error {
 	events := eq.PopEvents()
 
 	for _, e := range events {
@@ -46,7 +53,7 @@ func (p *Postcard) FromEventsQueue(eq aggregate.EventsQueue[*Postcard]) error {
 		}
 	}
 
-	p.eq = eq
+	p.events = eq
 
 	return nil
 }
@@ -60,13 +67,13 @@ func (p *Postcard) AggregateID() aggregate.ID {
 }
 
 func (p *Postcard) Write(content string) error {
-	return aggregate.Record[*Postcard](p, &p.eq, &Written{
+	return aggregate.Record[*Postcard](p, &p.events, &Written{
 		Content: content,
 	})
 }
 
 func (p *Postcard) Address(sender Address, addressee Address) error {
-	return aggregate.Record[*Postcard](p, &p.eq, &Addressed{
+	return aggregate.Record[*Postcard](p, &p.events, &Addressed{
 		Sender:    sender,
 		Addressee: addressee,
 	})
@@ -77,7 +84,7 @@ func (p *Postcard) Send() error {
 		return fmt.Errorf("postcard already sent")
 	}
 
-	return aggregate.Record[*Postcard](p, &p.eq, &Sent{})
+	return aggregate.Record[*Postcard](p, &p.events, &Sent{})
 }
 
 func (p *Postcard) Sender() Address {

@@ -2,6 +2,7 @@ package postcard
 
 import (
 	"fmt"
+
 	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
 )
 
@@ -20,9 +21,8 @@ type Postcard struct {
 
 func NewPostcard(id string) (*Postcard, error) {
 	p := &Postcard{}
-	p.eq = aggregate.NewEventsQueue(p)
 
-	err := p.eq.PushAndApply(&Created{
+	err := aggregate.Record[*Postcard](p, &p.eq, &Created{
 		ID: id,
 	})
 	if err != nil {
@@ -36,13 +36,17 @@ func (p *Postcard) PopEvents() []aggregate.VersionedEvent[*Postcard] {
 	return p.eq.PopEvents()
 }
 
-func (p *Postcard) FromEvents(events []aggregate.VersionedEvent[*Postcard]) error {
-	es, err := aggregate.NewEventsQueueFromEvents(p, events)
-	if err != nil {
-		return err
+func (p *Postcard) FromEventsQueue(eq aggregate.EventsQueue[*Postcard]) error {
+	events := eq.PopEvents()
+
+	for _, e := range events {
+		err := e.Apply(p)
+		if err != nil {
+			return err
+		}
 	}
 
-	p.eq = es
+	p.eq = eq
 
 	return nil
 }
@@ -56,13 +60,13 @@ func (p *Postcard) AggregateID() aggregate.ID {
 }
 
 func (p *Postcard) Write(content string) error {
-	return p.eq.PushAndApply(&Written{
+	return aggregate.Record[*Postcard](p, &p.eq, &Written{
 		Content: content,
 	})
 }
 
 func (p *Postcard) Address(sender Address, addressee Address) error {
-	return p.eq.PushAndApply(&Addressed{
+	return aggregate.Record[*Postcard](p, &p.eq, &Addressed{
 		Sender:    sender,
 		Addressee: addressee,
 	})
@@ -73,7 +77,7 @@ func (p *Postcard) Send() error {
 		return fmt.Errorf("postcard already sent")
 	}
 
-	return p.eq.PushAndApply(&Sent{})
+	return aggregate.Record[*Postcard](p, &p.eq, &Sent{})
 }
 
 func (p *Postcard) Sender() Address {

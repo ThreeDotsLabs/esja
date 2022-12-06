@@ -57,8 +57,11 @@ func TestPostcard_Lifecycle(t *testing.T) {
 	}
 	assert.Equal(expectedEvents, events)
 
+	eq, err := aggregate.NewEventsQueueFromEvents(events)
+	assert.NoError(err)
+
 	pcLoaded := postcard.Postcard{}
-	err = pcLoaded.FromEvents(events)
+	err = pcLoaded.FromEventsQueue(eq)
 	assert.NoError(err)
 
 	assert.Equal(senderAddress, pcLoaded.Sender())

@@ -124,7 +124,12 @@ func (r Repository[T]) Load(ctx context.Context, id aggregate.ID, target aggrega
 		return repository.ErrAggregateNotFound
 	}
 
-	return target.FromEvents(events)
+	eq, err := aggregate.NewEventsQueueFromEvents(events)
+	if err != nil {
+		return err
+	}
+
+	return target.FromEventsQueue(eq)
 }
 
 // Save saves the aggregate's queued events to the database.

@@ -14,8 +14,7 @@ import (
 	"github.com/ThreeDotsLabs/esja/example/aggregate/postcard"
 	"github.com/ThreeDotsLabs/esja/example/storage"
 	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
-	"github.com/ThreeDotsLabs/esja/pkg/repository"
-	"github.com/ThreeDotsLabs/esja/pkg/repository/inmemory"
+	"github.com/ThreeDotsLabs/esja/pkg/eventstore"
 )
 
 var (
@@ -46,15 +45,15 @@ func TestPostcard_Repositories(t *testing.T) {
 
 	testCases := []struct {
 		name       string
-		repository repository.Repository[*postcard.Postcard]
+		repository eventstore.EventStore[*postcard.Postcard]
 	}{
 		{
 			name:       "in_memory",
-			repository: inmemory.NewRepository[*postcard.Postcard](),
+			repository: eventstore.NewInMemoryStore[*postcard.Postcard](),
 		},
 		{
 			name: "postgres_simple",
-			repository: func() repository.Repository[*postcard.Postcard] {
+			repository: func() eventstore.EventStore[*postcard.Postcard] {
 				repo, err := storage.NewDefaultSimplePostcardRepository(context.Background(), db)
 				require.NoError(t, err)
 				return repo
@@ -62,7 +61,7 @@ func TestPostcard_Repositories(t *testing.T) {
 		},
 		{
 			name: "postgres_simple_custom",
-			repository: func() repository.Repository[*postcard.Postcard] {
+			repository: func() eventstore.EventStore[*postcard.Postcard] {
 				repo, err := storage.NewCustomSimplePostcardRepository(context.Background(), db)
 				require.NoError(t, err)
 				return repo
@@ -70,7 +69,7 @@ func TestPostcard_Repositories(t *testing.T) {
 		},
 		{
 			name: "postgres_simple_anonymized",
-			repository: func() repository.Repository[*postcard.Postcard] {
+			repository: func() eventstore.EventStore[*postcard.Postcard] {
 				repo, err := storage.NewSimpleAnonymizingPostcardRepository(context.Background(), db)
 				require.NoError(t, err)
 				return repo
@@ -78,7 +77,7 @@ func TestPostcard_Repositories(t *testing.T) {
 		},
 		{
 			name: "postgres_mapping",
-			repository: func() repository.Repository[*postcard.Postcard] {
+			repository: func() eventstore.EventStore[*postcard.Postcard] {
 				repo, err := storage.NewDefaultMappingPostgresRepository(context.Background(), db)
 				require.NoError(t, err)
 				return repo
@@ -86,7 +85,7 @@ func TestPostcard_Repositories(t *testing.T) {
 		},
 		{
 			name: "postgres_mapping",
-			repository: func() repository.Repository[*postcard.Postcard] {
+			repository: func() eventstore.EventStore[*postcard.Postcard] {
 				repo, err := storage.NewCustomMappingPostcardRepository(context.Background(), db)
 				require.NoError(t, err)
 				return repo
@@ -94,7 +93,7 @@ func TestPostcard_Repositories(t *testing.T) {
 		},
 		{
 			name: "postgres_mapping_anonymized",
-			repository: func() repository.Repository[*postcard.Postcard] {
+			repository: func() eventstore.EventStore[*postcard.Postcard] {
 				repo, err := storage.NewMappingAnonymizingPostcardRepository(context.Background(), db)
 				require.NoError(t, err)
 				return repo
@@ -117,7 +116,7 @@ func TestPostcard_Repositories(t *testing.T) {
 			require.NoError(t, err)
 
 			_, err = tc.repository.Load(ctx, aggregate.ID(id))
-			assert.ErrorIs(t, err, repository.ErrAggregateNotFound, "expected aggregate not found yet")
+			assert.ErrorIs(t, err, eventstore.ErrAggregateNotFound, "expected aggregate not found yet")
 
 			err = tc.repository.Save(ctx, pc)
 			require.NoError(t, err, "should save the aggregate and it has some events already")

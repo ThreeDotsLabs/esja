@@ -1,4 +1,4 @@
-package sql
+package eventstore
 
 import (
 	"context"
@@ -8,14 +8,7 @@ import (
 	"reflect"
 
 	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
-	"github.com/ThreeDotsLabs/esja/pkg/repository"
 )
-
-// EventSerializer translates the event to a database-friendly format and back.
-type EventSerializer[T any] interface {
-	Serialize(aggregate.ID, aggregate.Event[T]) ([]byte, error)
-	Deserialize(aggregate.ID, aggregate.EventName, []byte) (aggregate.Event[T], error)
-}
 
 // ContextExecutor can perform SQL queries with context
 type ContextExecutor interface {
@@ -35,45 +28,45 @@ type schemaAdapter[A any] interface {
 	InsertQuery(events []storageEvent[A]) (string, []any, error)
 }
 
-// Repository is an implementation of the Repository interface using an SQL database.
-type Repository[T aggregate.Aggregate[T]] struct {
+// SQLStore is an implementation of the EventStore interface using an SQLStore database.
+type SQLStore[T aggregate.Aggregate[T]] struct {
 	db     ContextExecutor
-	config Config[T]
+	config SQLConfig[T]
 }
 
-// NewRepository creates a new Repository.
+// NewSQLStore creates a new SQL EventStore.
 // The aggregateType is used to identify the aggregate type in the database. It should be a constant string and not change.
 // The serializer is used to translate the events to a database-friendly format and back.
-func NewRepository[T aggregate.Aggregate[T]](
+func NewSQLStore[T aggregate.Aggregate[T]](
 	ctx context.Context,
 	db ContextExecutor,
-	config Config[T],
-) (Repository[T], error) {
+	config SQLConfig[T],
+) (SQLStore[T], error) {
 	if db == nil {
-		return Repository[T]{}, errors.New("db must not be nil")
+		return SQLStore[T]{}, errors.New("db must not be nil")
 	}
 
 	err := config.validate()
 	if err != nil {
-		return Repository[T]{}, fmt.Errorf("invalid config: %w", err)
+		return SQLStore[T]{}, fmt.Errorf("invalid config: %w", err)
 	}
 
-	r := Repository[T]{
+	r := SQLStore[T]{
 		db:     db,
 		config: config,
 	}
 
 	err = r.initializeSchema(ctx)
 	if err != nil {
-		return Repository[T]{}, err
+		return SQLStore[T]{}, err
 	}
 
 	return r, nil
 }
 
-func (r Repository[T]) initializeSchema(ctx context.Context) error {
-	query := r.config.SchemaAdapter.InitializeSchemaQuery()
-	_, err := r.db.ExecContext(ctx, query)
+func (s SQLStore[T]) initializeSchema(ctx context.Context) error {
+	query := s.config.SchemaAdapter.InitializeSchemaQuery()
+	_, err := s.db.ExecContext(ctx, query)
 	if err != nil {
 		return fmt.Errorf("error initializing schema: %w", err)
 	}
@@ -82,14 +75,14 @@ func (r Repository[T]) initializeSchema(ctx context.Context) error {
 
 // Load loads the aggregate from the database events.
 // The target should be a pointer to the aggregate.
-func (r Repository[T]) Load(ctx context.Context, id aggregate.ID) (T, error) {
+func (s SQLStore[T]) Load(ctx context.Context, id aggregate.ID) (T, error) {
 	var target T
 
-	query, args, err := r.config.SchemaAdapter.SelectQuery(id.String())
+	query, args, err := s.config.SchemaAdapter.SelectQuery(id.String())
 	if err != nil {
 		return target, fmt.Errorf("error building select query: %w", err)
 	}
-	results, err := r.db.QueryContext(ctx, query, args...)
+	results, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return target, fmt.Errorf("error retrieving rows for events: %w", err)
 	}
@@ -111,7 +104,7 @@ func (r Repository[T]) Load(ctx context.Context, id aggregate.ID) (T, error) {
 			return target, fmt.Errorf("error reading row result: %w", err)
 		}
 
-		event, err := r.config.Serializer.Deserialize(aggregateID, eventName, eventPayload)
+		event, err := s.config.Serializer.Deserialize(aggregateID, eventName, eventPayload)
 		if err != nil {
 			return target, fmt.Errorf("error deserializing event: %w", err)
 		}
@@ -124,10 +117,10 @@ func (r Repository[T]) Load(ctx context.Context, id aggregate.ID) (T, error) {
 	}
 
 	if len(events) == 0 {
-		return target, repository.ErrAggregateNotFound
+		return target, ErrAggregateNotFound
 	}
 
-	eq, err := aggregate.NewEventsQueueFromEvents(events)
+	eq, err := aggregate.LoadEvents(events)
 	if err != nil {
 		return target, err
 	}
@@ -140,7 +133,7 @@ func (r Repository[T]) Load(ctx context.Context, id aggregate.ID) (T, error) {
 	newTarget := reflect.New(targetType).Interface()
 	agg := newTarget.(T)
 
-	err = agg.FromEventsQueue(eq)
+	err = agg.FromEvents(eq)
 	if err != nil {
 		return target, err
 	}
@@ -149,7 +142,7 @@ func (r Repository[T]) Load(ctx context.Context, id aggregate.ID) (T, error) {
 }
 
 // Save saves the aggregate's queued events to the database.
-func (r Repository[T]) Save(ctx context.Context, agg T) (err error) {
+func (s SQLStore[T]) Save(ctx context.Context, agg T) (err error) {
 	events := agg.PopEvents()
 	if len(events) == 0 {
 		return errors.New("no events to save")
@@ -157,7 +150,7 @@ func (r Repository[T]) Save(ctx context.Context, agg T) (err error) {
 
 	serializedEvents := make([]storageEvent[T], len(events))
 	for i, event := range events {
-		payload, err := r.config.Serializer.Serialize(agg.AggregateID(), event.Event)
+		payload, err := s.config.Serializer.Serialize(agg.AggregateID(), event.Event)
 		if err != nil {
 			return fmt.Errorf("error serializing event: %w", err)
 		}
@@ -169,12 +162,12 @@ func (r Repository[T]) Save(ctx context.Context, agg T) (err error) {
 		}
 	}
 
-	query, args, err := r.config.SchemaAdapter.InsertQuery(serializedEvents)
+	query, args, err := s.config.SchemaAdapter.InsertQuery(serializedEvents)
 	if err != nil {
 		return fmt.Errorf("error building insert query: %w", err)
 	}
 
-	result, err := r.db.ExecContext(ctx, query, args...)
+	result, err := s.db.ExecContext(ctx, query, args...)
 	if err != nil {
 		return fmt.Errorf("error executing insert query: %w", err)
 	}

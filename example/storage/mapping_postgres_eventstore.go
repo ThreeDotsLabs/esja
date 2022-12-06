@@ -6,15 +6,16 @@ import (
 
 	"github.com/ThreeDotsLabs/esja/example/aggregate/postcard"
 	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
-	sql2 "github.com/ThreeDotsLabs/esja/pkg/repository/sql"
+	"github.com/ThreeDotsLabs/esja/pkg/eventstore"
+	"github.com/ThreeDotsLabs/esja/pkg/transport"
 )
 
-func NewDefaultMappingPostgresRepository(ctx context.Context, db *sql.DB) (sql2.Repository[*postcard.Postcard], error) {
-	return sql2.NewRepository[*postcard.Postcard](
+func NewDefaultMappingPostgresRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[*postcard.Postcard], error) {
+	return eventstore.NewSQLStore[*postcard.Postcard](
 		ctx,
 		db,
-		sql2.NewMappingPostgresConfig[*postcard.Postcard](
-			[]sql2.EventMapper[*postcard.Postcard]{
+		eventstore.NewMappingPostgresSQLConfig[*postcard.Postcard](
+			[]transport.EventMapper[*postcard.Postcard]{
 				CreatedMapper{},
 				AddressedMapper{},
 				WrittenMapper{},
@@ -24,15 +25,15 @@ func NewDefaultMappingPostgresRepository(ctx context.Context, db *sql.DB) (sql2.
 	)
 }
 
-func NewCustomMappingPostcardRepository(ctx context.Context, db *sql.DB) (sql2.Repository[*postcard.Postcard], error) {
-	return sql2.NewRepository[*postcard.Postcard](
+func NewCustomMappingPostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[*postcard.Postcard], error) {
+	return eventstore.NewSQLStore[*postcard.Postcard](
 		ctx,
 		db,
-		sql2.Config[*postcard.Postcard]{
-			SchemaAdapter: sql2.NewPostgresSchemaAdapter[*postcard.Postcard]("PostcardMapping"),
-			Serializer: sql2.NewMappingSerializer(
-				sql2.JSONMarshaler{},
-				[]sql2.EventMapper[*postcard.Postcard]{
+		eventstore.SQLConfig[*postcard.Postcard]{
+			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[*postcard.Postcard]("PostcardMapping"),
+			Serializer: transport.NewMappingSerializer(
+				transport.JSONMarshaler{},
+				[]transport.EventMapper[*postcard.Postcard]{
 					CreatedMapper{},
 					AddressedMapper{},
 					WrittenMapper{},
@@ -43,16 +44,16 @@ func NewCustomMappingPostcardRepository(ctx context.Context, db *sql.DB) (sql2.R
 	)
 }
 
-func NewMappingAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (sql2.Repository[*postcard.Postcard], error) {
-	return sql2.NewRepository[*postcard.Postcard](
+func NewMappingAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[*postcard.Postcard], error) {
+	return eventstore.NewSQLStore[*postcard.Postcard](
 		ctx,
 		db,
-		sql2.Config[*postcard.Postcard]{
-			SchemaAdapter: sql2.NewPostgresSchemaAdapter[*postcard.Postcard]("PostcardMappingAnonymizing"),
-			Serializer: sql2.NewAESAnonymizingSerializer[*postcard.Postcard](
-				sql2.NewMappingSerializer[*postcard.Postcard](
-					sql2.JSONMarshaler{},
-					[]sql2.EventMapper[*postcard.Postcard]{
+		eventstore.SQLConfig[*postcard.Postcard]{
+			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[*postcard.Postcard]("PostcardMappingAnonymizing"),
+			Serializer: transport.NewAESAnonymizingSerializer[*postcard.Postcard](
+				transport.NewMappingSerializer[*postcard.Postcard](
+					transport.JSONMarshaler{},
+					[]transport.EventMapper[*postcard.Postcard]{
 						CreatedMapper{},
 						AddressedMapper{},
 						WrittenMapper{},

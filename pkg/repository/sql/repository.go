@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"reflect"
 
 	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
 	"github.com/ThreeDotsLabs/esja/pkg/repository"
@@ -35,7 +36,7 @@ type schemaAdapter[A any] interface {
 }
 
 // Repository is an implementation of the Repository interface using an SQL database.
-type Repository[T any] struct {
+type Repository[T aggregate.Aggregate[T]] struct {
 	db     ContextExecutor
 	config Config[T]
 }
@@ -43,7 +44,7 @@ type Repository[T any] struct {
 // NewRepository creates a new Repository.
 // The aggregateType is used to identify the aggregate type in the database. It should be a constant string and not change.
 // The serializer is used to translate the events to a database-friendly format and back.
-func NewRepository[T any](
+func NewRepository[T aggregate.Aggregate[T]](
 	ctx context.Context,
 	db ContextExecutor,
 	config Config[T],
@@ -81,14 +82,16 @@ func (r Repository[T]) initializeSchema(ctx context.Context) error {
 
 // Load loads the aggregate from the database events.
 // The target should be a pointer to the aggregate.
-func (r Repository[T]) Load(ctx context.Context, id aggregate.ID, target aggregate.Aggregate[T]) error {
+func (r Repository[T]) Load(ctx context.Context, id aggregate.ID) (T, error) {
+	var target T
+
 	query, args, err := r.config.SchemaAdapter.SelectQuery(id.String())
 	if err != nil {
-		return fmt.Errorf("error building select query: %w", err)
+		return target, fmt.Errorf("error building select query: %w", err)
 	}
 	results, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return fmt.Errorf("error retrieving rows for events: %w", err)
+		return target, fmt.Errorf("error retrieving rows for events: %w", err)
 	}
 
 	defer func() {
@@ -105,12 +108,12 @@ func (r Repository[T]) Load(ctx context.Context, id aggregate.ID, target aggrega
 	for results.Next() {
 		err = results.Scan(&aggregateID, &aggregateVersion, &eventName, &eventPayload)
 		if err != nil {
-			return fmt.Errorf("error reading row result: %w", err)
+			return target, fmt.Errorf("error reading row result: %w", err)
 		}
 
 		event, err := r.config.Serializer.Deserialize(aggregateID, eventName, eventPayload)
 		if err != nil {
-			return fmt.Errorf("error deserializing event: %w", err)
+			return target, fmt.Errorf("error deserializing event: %w", err)
 		}
 
 		versionedEvent := aggregate.VersionedEvent[T]{
@@ -121,19 +124,32 @@ func (r Repository[T]) Load(ctx context.Context, id aggregate.ID, target aggrega
 	}
 
 	if len(events) == 0 {
-		return repository.ErrAggregateNotFound
+		return target, repository.ErrAggregateNotFound
 	}
 
 	eq, err := aggregate.NewEventsQueueFromEvents(events)
 	if err != nil {
-		return err
+		return target, err
 	}
 
-	return target.FromEventsQueue(eq)
+	targetType := reflect.TypeOf(target)
+	if targetType.Kind() == reflect.Ptr {
+		targetType = targetType.Elem()
+	}
+
+	newTarget := reflect.New(targetType).Interface()
+	agg := newTarget.(T)
+
+	err = agg.FromEventsQueue(eq)
+	if err != nil {
+		return target, err
+	}
+
+	return agg, nil
 }
 
 // Save saves the aggregate's queued events to the database.
-func (r Repository[T]) Save(ctx context.Context, agg aggregate.Aggregate[T]) (err error) {
+func (r Repository[T]) Save(ctx context.Context, agg T) (err error) {
 	events := agg.PopEvents()
 	if len(events) == 0 {
 		return errors.New("no events to save")

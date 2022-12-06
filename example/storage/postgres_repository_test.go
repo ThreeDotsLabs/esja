@@ -116,19 +116,16 @@ func TestPostcard_Repositories(t *testing.T) {
 			err = pc.Address(senderAddress, addresseeAddress)
 			require.NoError(t, err)
 
-			var fromRepo1 postcard.Postcard
-			err = tc.repository.Load(ctx, aggregate.ID(id), &fromRepo1)
+			_, err = tc.repository.Load(ctx, aggregate.ID(id))
 			assert.ErrorIs(t, err, repository.ErrAggregateNotFound, "expected aggregate not found yet")
 
 			err = tc.repository.Save(ctx, pc)
 			require.NoError(t, err, "should save the aggregate and it has some events already")
 
-			var fromRepo2 postcard.Postcard
-			err = tc.repository.Load(ctx, aggregate.ID(id), &fromRepo2)
+			fromRepo2, err := tc.repository.Load(ctx, aggregate.ID(id))
 			assert.NoError(t, err, "should retrieve the aggregate, some events should have been saved")
 
-			var fromRepo2Duplicate postcard.Postcard
-			err = tc.repository.Load(ctx, aggregate.ID(id), &fromRepo2Duplicate)
+			fromRepo2Duplicate, err := tc.repository.Load(ctx, aggregate.ID(id))
 			assert.NoError(t, err)
 
 			assert.Equal(t, pc.ID(), fromRepo2.ID())
@@ -142,18 +139,17 @@ func TestPostcard_Repositories(t *testing.T) {
 			err = fromRepo2.Send()
 			require.NoError(t, err)
 
-			err = tc.repository.Save(ctx, &fromRepo2)
+			err = tc.repository.Save(ctx, fromRepo2)
 			require.NoError(t, err)
 
 			// Another path: send right away without writing
 			err = fromRepo2Duplicate.Send()
 			require.NoError(t, err)
 
-			err = tc.repository.Save(ctx, &fromRepo2Duplicate)
+			err = tc.repository.Save(ctx, fromRepo2Duplicate)
 			require.Error(t, err, "should fail to save the same aggregate version")
 
-			var fromRepo3 postcard.Postcard
-			err = tc.repository.Load(ctx, aggregate.ID(id), &fromRepo3)
+			fromRepo3, err := tc.repository.Load(ctx, aggregate.ID(id))
 			assert.NoError(t, err)
 
 			assert.Equal(t, id, fromRepo3.ID())

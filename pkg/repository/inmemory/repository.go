@@ -3,42 +3,58 @@ package inmemory
 import (
 	"context"
 	"errors"
+	"reflect"
 	"sync"
 
 	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
 	"github.com/ThreeDotsLabs/esja/pkg/repository"
 )
 
-type Repository[T any] struct {
+type Repository[T aggregate.Aggregate[T]] struct {
 	lock   sync.RWMutex
 	events map[aggregate.ID][]aggregate.VersionedEvent[T]
 }
 
-func NewRepository[T any]() *Repository[T] {
+func NewRepository[T aggregate.Aggregate[T]]() *Repository[T] {
 	return &Repository[T]{
 		lock:   sync.RWMutex{},
 		events: map[aggregate.ID][]aggregate.VersionedEvent[T]{},
 	}
 }
 
-func (i *Repository[T]) Load(_ context.Context, id aggregate.ID, target aggregate.Aggregate[T]) error {
+func (i *Repository[T]) Load(_ context.Context, id aggregate.ID) (T, error) {
 	i.lock.RLock()
 	defer i.lock.RUnlock()
 
+	var target T
+
 	events, ok := i.events[id]
 	if !ok {
-		return repository.ErrAggregateNotFound
+		return target, repository.ErrAggregateNotFound
 	}
 
 	eq, err := aggregate.NewEventsQueueFromEvents(events)
 	if err != nil {
-		return err
+		return target, err
 	}
 
-	return target.FromEventsQueue(eq)
+	targetType := reflect.TypeOf(target)
+	if targetType.Kind() == reflect.Ptr {
+		targetType = targetType.Elem()
+	}
+
+	newTarget := reflect.New(targetType).Interface()
+	agg := newTarget.(T)
+
+	err = agg.FromEventsQueue(eq)
+	if err != nil {
+		return target, err
+	}
+
+	return agg, nil
 }
 
-func (i *Repository[T]) Save(_ context.Context, a aggregate.Aggregate[T]) error {
+func (i *Repository[T]) Save(_ context.Context, a T) error {
 	i.lock.Lock()
 	defer i.lock.Unlock()
 

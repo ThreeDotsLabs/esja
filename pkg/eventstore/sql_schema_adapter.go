@@ -27,24 +27,25 @@ INSERT INTO %s (
 )
 VALUES %s
 `
+	defaultInsertMarkersCount  = 5
+	defaultInsertMarkersPatter = "($%d,$%d,$%d,$%d,$%d),"
 )
 
 func defaultInsertMarkers(count int) string {
 	result := strings.Builder{}
 
-	index := 1
-	for i := 0; i < count; i++ {
-		result.WriteString(
-			fmt.Sprintf(
-				"($%d,$%d,$%d,$%d,$%d),",
-				index,
-				index+1,
-				index+2,
-				index+3,
-				index+4,
-			),
-		)
-		index += 5
+	var indices []any
+	for i := 1; i <= count*defaultInsertMarkersCount; i++ {
+		indices = append(indices, i)
+		if i%defaultInsertMarkersCount == 0 {
+			result.WriteString(
+				fmt.Sprintf(
+					defaultInsertMarkersPatter,
+					indices...,
+				),
+			)
+			indices = nil
+		}
 	}
 
 	return strings.TrimRight(result.String(), ",")

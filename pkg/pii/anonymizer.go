@@ -16,8 +16,8 @@ type StringAnonymizer[K any] interface {
 }
 
 // StructAnonymizer anonymizes and deanonymizes structs.
-// T is the type of the key used to anonymize the struct.
-// K is the type of the struct to be anonymized.
+// K is the type of key used to anonymize the struct.
+// T is the type of struct to be anonymized.
 type StructAnonymizer[K any, T any] struct {
 	stringAnonymizer StringAnonymizer[K]
 }

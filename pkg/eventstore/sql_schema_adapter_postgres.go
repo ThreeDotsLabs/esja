@@ -4,18 +4,7 @@ import (
 	"fmt"
 )
 
-type PostgresSchemaAdapter[A any] struct {
-	aggregateType string
-}
-
-func NewPostgresSchemaAdapter[A any](aggregateType string) PostgresSchemaAdapter[A] {
-	return PostgresSchemaAdapter[A]{
-		aggregateType: aggregateType,
-	}
-}
-
-func (a PostgresSchemaAdapter[A]) InitializeSchemaQuery() string {
-	query := `
+const postgresInitializeSchemaQuery = `
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS %[1]s (
 		id serial NOT NULL PRIMARY KEY,
@@ -29,19 +18,23 @@ CREATE TABLE IF NOT EXISTS %[1]s (
 CREATE INDEX IF NOT EXISTS idx_aggregate_id ON %[1]s (aggregate_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_aggregate_id_version ON %[1]s (aggregate_id, aggregate_version);
 `
-	return fmt.Sprintf(query, eventsTableName)
+
+type PostgresSchemaAdapter[A any] struct {
+	aggregateType string
+}
+
+func NewPostgresSchemaAdapter[A any](aggregateType string) PostgresSchemaAdapter[A] {
+	return PostgresSchemaAdapter[A]{
+		aggregateType: aggregateType,
+	}
+}
+
+func (a PostgresSchemaAdapter[A]) InitializeSchemaQuery() string {
+	return fmt.Sprintf(postgresInitializeSchemaQuery, defaultEventsTableName)
 }
 
 func (a PostgresSchemaAdapter[A]) SelectQuery(aggregateID string) (string, []any, error) {
-	query := `
-SELECT 
-	aggregate_id, aggregate_version, event_name, event_payload 
-FROM "%s"
-WHERE aggregate_id = $1 AND aggregate_type = $2
-ORDER BY aggregate_version ASC;
-`
-
-	query = fmt.Sprintf(query, eventsTableName)
+	query := fmt.Sprintf(defaultSelectQuery, defaultEventsTableName)
 
 	args := []any{
 		aggregateID, a.aggregateType,
@@ -51,14 +44,9 @@ ORDER BY aggregate_version ASC;
 }
 
 func (a PostgresSchemaAdapter[A]) InsertQuery(events []storageEvent[A]) (string, []any, error) {
-	query := `
-INSERT INTO %s (aggregate_id, aggregate_version, aggregate_type, event_name, event_payload)
-VALUES %s`
-
-	query = fmt.Sprintf(query, eventsTableName, defaultInsertMarkers(len(events)))
+	query := fmt.Sprintf(defaultInsertQuery, defaultEventsTableName, defaultInsertMarkers(len(events)))
 
 	var args []any
-
 	for _, e := range events {
 		args = append(
 			args,

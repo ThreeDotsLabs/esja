@@ -66,7 +66,7 @@ func NewMappingAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (e
 	)
 }
 
-func NewMappingSQLiteRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[*postcard.Postcard], error) {
+func NewMappingSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[*postcard.Postcard], error) {
 	return eventstore.NewSQLStore[*postcard.Postcard](
 		ctx,
 		db,

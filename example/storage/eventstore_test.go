@@ -4,12 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 	"testing"
 
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -32,24 +32,9 @@ var (
 	}
 )
 
-const (
-	host     = "localhost"
-	port     = 5432
-	user     = "postgres"
-	password = "password"
-	dbname   = "postgres"
-)
-
 func TestPostcard_Repositories(t *testing.T) {
-	conn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-	postgresDB, err := sql.Open("postgres", conn)
-	require.NoError(t, err)
-
-	dbFile, err := os.CreateTemp("", "tmpfile-")
-	if err != nil {
-		log.Fatal(err)
-	}
-	sqliteDB, err := sql.Open("sqlite3", dbFile.Name())
+	postgresDB := testPostgresDB(t)
+	sqliteDB := testSQLiteDB(t)
 
 	testCases := []struct {
 		name       string
@@ -118,7 +103,7 @@ func TestPostcard_Repositories(t *testing.T) {
 		{
 			name: "sqlite_mapping",
 			repository: func() eventstore.EventStore[*postcard.Postcard] {
-				repo, err := storage.NewMappingSQLiteRepository(context.Background(), sqliteDB)
+				repo, err := storage.NewMappingSQLitePostcardRepository(context.Background(), sqliteDB)
 				require.NoError(t, err)
 				return repo
 			}(),
@@ -183,4 +168,37 @@ func TestPostcard_Repositories(t *testing.T) {
 			assert.Empty(t, fromRepo3.PopEvents())
 		})
 	}
+}
+
+const (
+	host     = "localhost"
+	port     = 5432
+	user     = "postgres"
+	password = "password"
+	dbname   = "postgres"
+)
+
+func testPostgresDB(t *testing.T) *sql.DB {
+	conn := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		host,
+		port,
+		user,
+		password,
+		dbname,
+	)
+	postgresDB, err := sql.Open("postgres", conn)
+	require.NoError(t, err)
+
+	return postgresDB
+}
+
+func testSQLiteDB(t *testing.T) *sql.DB {
+	dbFile, err := os.CreateTemp("", "tmp_*.db")
+	require.NoError(t, err)
+
+	sqliteDB, err := sql.Open("sqlite3", dbFile.Name())
+	require.NoError(t, err)
+
+	return sqliteDB
 }

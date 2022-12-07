@@ -9,7 +9,7 @@ const (
 )
 
 // StringAnonymizer anonymizes and deanonymizes strings.
-// T is the type of the key used to anonymize the string.
+// K is the type of key used to anonymize the string.
 type StringAnonymizer[K any] interface {
 	AnonymizeString(key K, value string) (string, error)
 	DeanonymizeString(key K, value string) (string, error)

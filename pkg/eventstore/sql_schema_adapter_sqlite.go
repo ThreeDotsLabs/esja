@@ -7,12 +7,12 @@ import (
 const sqliteInitializeSchemaQuery = `
 CREATE TABLE IF NOT EXISTS %[1]s (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    aggregate_id varchar NOT NULL,
-    aggregate_version int NOT NULL,
-    aggregate_type varchar NOT NULL,
-    event_name varchar NOT NULL,
-    event_payload blob NOT NULL,
-    stored_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+    aggregate_id VARCHAR(36) NOT NULL,
+    aggregate_version INTEGER NOT NULL,
+    aggregate_type TEXT NOT NULL,
+    event_name TEXT NOT NULL,
+    event_payload BLOB NOT NULL,
+    stored_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS idx_aggregate_id ON %[1]s (aggregate_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_aggregate_id_version ON %[1]s (aggregate_id, aggregate_version);

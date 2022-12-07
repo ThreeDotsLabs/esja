@@ -2,10 +2,11 @@ package pii_test
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ThreeDotsLabs/esja/pkg/pii"
 )
@@ -17,7 +18,7 @@ type testStruct struct {
 }
 
 func TestStructAnonymizer(t *testing.T) {
-	a := pii.NewStructAnonymizer[testStruct, string](testStringAnonymizer{})
+	a := pii.NewStructAnonymizer[string, testStruct](testStringAnonymizer{})
 
 	s := testStruct{
 		FirstName: "John",

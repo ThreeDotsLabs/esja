@@ -7,7 +7,7 @@ import (
 
 type AESAnonymizingSerializer[T any] struct {
 	serializer EventSerializer[T]
-	anonymizer pii.StructAnonymizer[aggregate.Event[T], aggregate.ID]
+	anonymizer pii.StructAnonymizer[aggregate.ID, aggregate.Event[T]]
 }
 
 func NewAESAnonymizingSerializer[T any](
@@ -16,7 +16,7 @@ func NewAESAnonymizingSerializer[T any](
 ) *AESAnonymizingSerializer[T] {
 	return &AESAnonymizingSerializer[T]{
 		serializer: serializer,
-		anonymizer: pii.NewStructAnonymizer[aggregate.Event[T], aggregate.ID](
+		anonymizer: pii.NewStructAnonymizer[aggregate.ID, aggregate.Event[T]](
 			pii.NewAESAnonymizer[aggregate.ID](secretProvider),
 		),
 	}

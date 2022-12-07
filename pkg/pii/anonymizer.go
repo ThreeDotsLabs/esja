@@ -8,24 +8,29 @@ const (
 	anonymizeTag = "anonymize"
 )
 
+// StringAnonymizer anonymizes and deanonymizes strings.
+// T is the type of the key used to anonymize the string.
 type StringAnonymizer[K any] interface {
 	AnonymizeString(key K, value string) (string, error)
 	DeanonymizeString(key K, value string) (string, error)
 }
 
-type StructAnonymizer[T any, K any] struct {
+// StructAnonymizer anonymizes and deanonymizes structs.
+// T is the type of the key used to anonymize the struct.
+// K is the type of the struct to be anonymized.
+type StructAnonymizer[K any, T any] struct {
 	stringAnonymizer StringAnonymizer[K]
 }
 
-func NewStructAnonymizer[T any, K any](
+func NewStructAnonymizer[K any, T any](
 	stringAnonymizer StringAnonymizer[K],
-) StructAnonymizer[T, K] {
-	return StructAnonymizer[T, K]{
+) StructAnonymizer[K, T] {
+	return StructAnonymizer[K, T]{
 		stringAnonymizer: stringAnonymizer,
 	}
 }
 
-func (a StructAnonymizer[T, K]) Anonymize(key K, data T) (T, error) {
+func (a StructAnonymizer[K, T]) Anonymize(key K, data T) (T, error) {
 	t := reflect.TypeOf(data)
 	cp := reflect.New(t).Elem()
 	cp.Set(reflect.ValueOf(data))
@@ -39,7 +44,7 @@ func (a StructAnonymizer[T, K]) Anonymize(key K, data T) (T, error) {
 	return cp.Interface().(T), nil
 }
 
-func (a StructAnonymizer[T, K]) anonymize(key K, v reflect.Value) error {
+func (a StructAnonymizer[K, T]) anonymize(key K, v reflect.Value) error {
 	tv := v
 	t := v.Type()
 	for tv.Kind() == reflect.Ptr {
@@ -71,7 +76,7 @@ func (a StructAnonymizer[T, K]) anonymize(key K, v reflect.Value) error {
 	return nil
 }
 
-func (a StructAnonymizer[T, K]) Deanonymize(key K, data T) (T, error) {
+func (a StructAnonymizer[K, T]) Deanonymize(key K, data T) (T, error) {
 	t := reflect.TypeOf(data)
 	cp := reflect.New(t).Elem()
 	cp.Set(reflect.ValueOf(data))
@@ -86,7 +91,7 @@ func (a StructAnonymizer[T, K]) Deanonymize(key K, data T) (T, error) {
 	return cp.Interface().(T), nil
 }
 
-func (a StructAnonymizer[T, K]) deanonymize(key K, v reflect.Value) error {
+func (a StructAnonymizer[K, T]) deanonymize(key K, v reflect.Value) error {
 	tv := v
 	t := v.Type()
 	for tv.Kind() == reflect.Ptr {

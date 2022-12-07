@@ -27,8 +27,8 @@ INSERT INTO %s (
 )
 VALUES %s
 `
-	defaultInsertMarkersCount  = 5
-	defaultInsertMarkersPatter = "($%d,$%d,$%d,$%d,$%d),"
+	defaultInsertMarkersCount   = 5
+	defaultInsertMarkersPattern = "($%d,$%d,$%d,$%d,$%d),"
 )
 
 func defaultInsertMarkers(count int) string {
@@ -40,7 +40,7 @@ func defaultInsertMarkers(count int) string {
 		if i%defaultInsertMarkersCount == 0 {
 			result.WriteString(
 				fmt.Sprintf(
-					defaultInsertMarkersPatter,
+					defaultInsertMarkersPattern,
 					indices...,
 				),
 			)

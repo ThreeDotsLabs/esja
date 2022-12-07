@@ -68,6 +68,21 @@ func NewSimpleAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (ev
 	)
 }
 
+func NewSimpleSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[*postcard.Postcard], error) {
+	return eventstore.NewSQLStore[*postcard.Postcard](
+		ctx,
+		db,
+		eventstore.NewSQLiteConfig[*postcard.Postcard](
+			[]aggregate.Event[*postcard.Postcard]{
+				postcard.Created{},
+				postcard.Addressed{},
+				postcard.Written{},
+				postcard.Sent{},
+			},
+		),
+	)
+}
+
 type ConstantSecretProvider struct{}
 
 func (c ConstantSecretProvider) SecretForKey(aggregateID aggregate.ID) ([]byte, error) {

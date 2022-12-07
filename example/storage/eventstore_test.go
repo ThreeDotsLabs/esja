@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
+	"os"
 	"testing"
 
 	"github.com/google/uuid"
@@ -40,8 +42,14 @@ const (
 
 func TestPostcard_Repositories(t *testing.T) {
 	conn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-	db, err := sql.Open("postgres", conn)
+	postgresDB, err := sql.Open("postgres", conn)
 	require.NoError(t, err)
+
+	dbFile, err := os.CreateTemp("", "tmpfile-")
+	if err != nil {
+		log.Fatal(err)
+	}
+	sqliteDB, err := sql.Open("sqlite3", dbFile.Name())
 
 	testCases := []struct {
 		name       string
@@ -54,7 +62,7 @@ func TestPostcard_Repositories(t *testing.T) {
 		{
 			name: "postgres_simple",
 			repository: func() eventstore.EventStore[*postcard.Postcard] {
-				repo, err := storage.NewDefaultSimplePostcardRepository(context.Background(), db)
+				repo, err := storage.NewDefaultSimplePostcardRepository(context.Background(), postgresDB)
 				require.NoError(t, err)
 				return repo
 			}(),
@@ -62,7 +70,7 @@ func TestPostcard_Repositories(t *testing.T) {
 		{
 			name: "postgres_simple_custom",
 			repository: func() eventstore.EventStore[*postcard.Postcard] {
-				repo, err := storage.NewCustomSimplePostcardRepository(context.Background(), db)
+				repo, err := storage.NewCustomSimplePostcardRepository(context.Background(), postgresDB)
 				require.NoError(t, err)
 				return repo
 			}(),
@@ -70,7 +78,7 @@ func TestPostcard_Repositories(t *testing.T) {
 		{
 			name: "postgres_simple_anonymized",
 			repository: func() eventstore.EventStore[*postcard.Postcard] {
-				repo, err := storage.NewSimpleAnonymizingPostcardRepository(context.Background(), db)
+				repo, err := storage.NewSimpleAnonymizingPostcardRepository(context.Background(), postgresDB)
 				require.NoError(t, err)
 				return repo
 			}(),
@@ -78,15 +86,15 @@ func TestPostcard_Repositories(t *testing.T) {
 		{
 			name: "postgres_mapping",
 			repository: func() eventstore.EventStore[*postcard.Postcard] {
-				repo, err := storage.NewDefaultMappingPostgresRepository(context.Background(), db)
+				repo, err := storage.NewDefaultMappingPostgresRepository(context.Background(), postgresDB)
 				require.NoError(t, err)
 				return repo
 			}(),
 		},
 		{
-			name: "postgres_mapping",
+			name: "postgres_mapping_custom",
 			repository: func() eventstore.EventStore[*postcard.Postcard] {
-				repo, err := storage.NewCustomMappingPostcardRepository(context.Background(), db)
+				repo, err := storage.NewCustomMappingPostcardRepository(context.Background(), postgresDB)
 				require.NoError(t, err)
 				return repo
 			}(),
@@ -94,7 +102,23 @@ func TestPostcard_Repositories(t *testing.T) {
 		{
 			name: "postgres_mapping_anonymized",
 			repository: func() eventstore.EventStore[*postcard.Postcard] {
-				repo, err := storage.NewMappingAnonymizingPostcardRepository(context.Background(), db)
+				repo, err := storage.NewMappingAnonymizingPostcardRepository(context.Background(), postgresDB)
+				require.NoError(t, err)
+				return repo
+			}(),
+		},
+		{
+			name: "sqlite_simple",
+			repository: func() eventstore.EventStore[*postcard.Postcard] {
+				repo, err := storage.NewSimpleSQLitePostcardRepository(context.Background(), sqliteDB)
+				require.NoError(t, err)
+				return repo
+			}(),
+		},
+		{
+			name: "sqlite_mapping",
+			repository: func() eventstore.EventStore[*postcard.Postcard] {
+				repo, err := storage.NewMappingSQLiteRepository(context.Background(), sqliteDB)
 				require.NoError(t, err)
 				return repo
 			}(),

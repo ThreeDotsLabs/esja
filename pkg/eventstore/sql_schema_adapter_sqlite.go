@@ -7,7 +7,7 @@ import (
 const sqliteInitializeSchemaQuery = `
 CREATE TABLE IF NOT EXISTS %[1]s (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    aggregate_id VARCHAR(36) NOT NULL,
+    aggregate_id TEXT NOT NULL,
     aggregate_version INTEGER NOT NULL,
     aggregate_type TEXT NOT NULL,
     event_name TEXT NOT NULL,

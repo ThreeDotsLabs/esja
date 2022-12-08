@@ -28,7 +28,7 @@ type Address struct {
 func NewPostcard(id string) (*Postcard, error) {
 	p := &Postcard{}
 
-	err := stream.Record[*Postcard](p, &p.events, &Created{
+	err := stream.Record[*Postcard](p, &p.events, Created{
 		ID: id,
 	})
 	if err != nil {
@@ -66,13 +66,13 @@ func (p *Postcard) StreamID() stream.ID {
 }
 
 func (p *Postcard) Write(content string) error {
-	return stream.Record[*Postcard](p, &p.events, &Written{
+	return stream.Record[*Postcard](p, &p.events, Written{
 		Content: content,
 	})
 }
 
 func (p *Postcard) Address(sender Address, addressee Address) error {
-	return stream.Record[*Postcard](p, &p.events, &Addressed{
+	return stream.Record[*Postcard](p, &p.events, Addressed{
 		Sender:    sender,
 		Addressee: addressee,
 	})
@@ -83,7 +83,7 @@ func (p *Postcard) Send() error {
 		return fmt.Errorf("postcard already sent")
 	}
 
-	return stream.Record[*Postcard](p, &p.events, &Sent{})
+	return stream.Record[*Postcard](p, &p.events, Sent{})
 }
 
 func (p *Postcard) Sender() Address {

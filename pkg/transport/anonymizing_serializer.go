@@ -7,7 +7,7 @@ import (
 
 type AESAnonymizingSerializer[T any] struct {
 	serializer EventSerializer[T]
-	anonymizer pii.StructAnonymizer[stream.ID]
+	anonymizer pii.StructAnonymizer[stream.ID, stream.Event[T]]
 }
 
 func NewAESAnonymizingSerializer[T any](
@@ -16,19 +16,19 @@ func NewAESAnonymizingSerializer[T any](
 ) *AESAnonymizingSerializer[T] {
 	return &AESAnonymizingSerializer[T]{
 		serializer: serializer,
-		anonymizer: pii.NewStructAnonymizer[stream.ID](
+		anonymizer: pii.NewStructAnonymizer[stream.ID, stream.Event[T]](
 			pii.NewAESAnonymizer[stream.ID](secretProvider),
 		),
 	}
 }
 
 func (s *AESAnonymizingSerializer[T]) Serialize(streamID stream.ID, event stream.Event[T]) ([]byte, error) {
-	err := s.anonymizer.Anonymize(streamID, event)
+	anonymized, err := s.anonymizer.Anonymize(streamID, event)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.serializer.Serialize(streamID, event)
+	return s.serializer.Serialize(streamID, anonymized)
 }
 
 func (s *AESAnonymizingSerializer[T]) Deserialize(streamID stream.ID, name stream.EventName, payload []byte) (stream.Event[T], error) {
@@ -37,10 +37,10 @@ func (s *AESAnonymizingSerializer[T]) Deserialize(streamID stream.ID, name strea
 		return nil, err
 	}
 
-	err = s.anonymizer.Deanonymize(streamID, event)
+	deanonymized, err = s.anonymizer.Deanonymize(streamID, event)
 	if err != nil {
 		return nil, err
 	}
 
-	return event, nil
+	return deanonymized, nil
 }

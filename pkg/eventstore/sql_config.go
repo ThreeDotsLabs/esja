@@ -38,3 +38,21 @@ func NewMappingPostgresSQLConfig[T any](
 		Serializer:    transport.NewMappingSerializer[T](transport.JSONMarshaler{}, eventMappers),
 	}
 }
+
+func NewSQLiteConfig[T any](
+	supportedEvents []aggregate.Event[T],
+) SQLConfig[T] {
+	return SQLConfig[T]{
+		SchemaAdapter: NewSQLiteSchemaAdapter[T](""),
+		Serializer:    transport.NewSimpleSerializer(transport.JSONMarshaler{}, supportedEvents),
+	}
+}
+
+func NewMappingSQLiteConfig[T any](
+	eventMappers []transport.EventMapper[T],
+) SQLConfig[T] {
+	return SQLConfig[T]{
+		SchemaAdapter: NewSQLiteSchemaAdapter[T](""),
+		Serializer:    transport.NewMappingSerializer[T](transport.JSONMarshaler{}, eventMappers),
+	}
+}

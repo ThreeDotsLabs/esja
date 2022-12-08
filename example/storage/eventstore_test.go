@@ -4,10 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -30,18 +32,9 @@ var (
 	}
 )
 
-const (
-	host     = "localhost"
-	port     = 5432
-	user     = "postgres"
-	password = "password"
-	dbname   = "postgres"
-)
-
 func TestPostcard_Repositories(t *testing.T) {
-	conn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", host, port, user, password, dbname)
-	db, err := sql.Open("postgres", conn)
-	require.NoError(t, err)
+	postgresDB := testPostgresDB(t)
+	sqliteDB := testSQLiteDB(t)
 
 	testCases := []struct {
 		name       string
@@ -54,7 +47,7 @@ func TestPostcard_Repositories(t *testing.T) {
 		{
 			name: "postgres_simple",
 			repository: func() eventstore.EventStore[*postcard.Postcard] {
-				repo, err := storage.NewDefaultSimplePostcardRepository(context.Background(), db)
+				repo, err := storage.NewDefaultSimplePostcardRepository(context.Background(), postgresDB)
 				require.NoError(t, err)
 				return repo
 			}(),
@@ -62,7 +55,7 @@ func TestPostcard_Repositories(t *testing.T) {
 		{
 			name: "postgres_simple_custom",
 			repository: func() eventstore.EventStore[*postcard.Postcard] {
-				repo, err := storage.NewCustomSimplePostcardRepository(context.Background(), db)
+				repo, err := storage.NewCustomSimplePostcardRepository(context.Background(), postgresDB)
 				require.NoError(t, err)
 				return repo
 			}(),
@@ -70,7 +63,7 @@ func TestPostcard_Repositories(t *testing.T) {
 		{
 			name: "postgres_simple_anonymized",
 			repository: func() eventstore.EventStore[*postcard.Postcard] {
-				repo, err := storage.NewSimpleAnonymizingPostcardRepository(context.Background(), db)
+				repo, err := storage.NewSimpleAnonymizingPostcardRepository(context.Background(), postgresDB)
 				require.NoError(t, err)
 				return repo
 			}(),
@@ -78,15 +71,15 @@ func TestPostcard_Repositories(t *testing.T) {
 		{
 			name: "postgres_mapping",
 			repository: func() eventstore.EventStore[*postcard.Postcard] {
-				repo, err := storage.NewDefaultMappingPostgresRepository(context.Background(), db)
+				repo, err := storage.NewDefaultMappingPostgresRepository(context.Background(), postgresDB)
 				require.NoError(t, err)
 				return repo
 			}(),
 		},
 		{
-			name: "postgres_mapping",
+			name: "postgres_mapping_custom",
 			repository: func() eventstore.EventStore[*postcard.Postcard] {
-				repo, err := storage.NewCustomMappingPostcardRepository(context.Background(), db)
+				repo, err := storage.NewCustomMappingPostcardRepository(context.Background(), postgresDB)
 				require.NoError(t, err)
 				return repo
 			}(),
@@ -94,7 +87,23 @@ func TestPostcard_Repositories(t *testing.T) {
 		{
 			name: "postgres_mapping_anonymized",
 			repository: func() eventstore.EventStore[*postcard.Postcard] {
-				repo, err := storage.NewMappingAnonymizingPostcardRepository(context.Background(), db)
+				repo, err := storage.NewMappingAnonymizingPostcardRepository(context.Background(), postgresDB)
+				require.NoError(t, err)
+				return repo
+			}(),
+		},
+		{
+			name: "sqlite_simple",
+			repository: func() eventstore.EventStore[*postcard.Postcard] {
+				repo, err := storage.NewSimpleSQLitePostcardRepository(context.Background(), sqliteDB)
+				require.NoError(t, err)
+				return repo
+			}(),
+		},
+		{
+			name: "sqlite_mapping",
+			repository: func() eventstore.EventStore[*postcard.Postcard] {
+				repo, err := storage.NewMappingSQLitePostcardRepository(context.Background(), sqliteDB)
 				require.NoError(t, err)
 				return repo
 			}(),
@@ -159,4 +168,37 @@ func TestPostcard_Repositories(t *testing.T) {
 			assert.Empty(t, fromRepo3.PopEvents())
 		})
 	}
+}
+
+const (
+	host     = "localhost"
+	port     = 5432
+	user     = "postgres"
+	password = "password"
+	dbname   = "postgres"
+)
+
+func testPostgresDB(t *testing.T) *sql.DB {
+	conn := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		host,
+		port,
+		user,
+		password,
+		dbname,
+	)
+	postgresDB, err := sql.Open("postgres", conn)
+	require.NoError(t, err)
+
+	return postgresDB
+}
+
+func testSQLiteDB(t *testing.T) *sql.DB {
+	dbFile, err := os.CreateTemp("", "tmp_*.db")
+	require.NoError(t, err)
+
+	sqliteDB, err := sql.Open("sqlite3", dbFile.Name())
+	require.NoError(t, err)
+
+	return sqliteDB
 }

@@ -66,6 +66,21 @@ func NewMappingAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (e
 	)
 }
 
+func NewMappingSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[*postcard.Postcard], error) {
+	return eventstore.NewSQLStore[*postcard.Postcard](
+		ctx,
+		db,
+		eventstore.NewMappingSQLiteConfig[*postcard.Postcard](
+			[]transport.EventMapper[*postcard.Postcard]{
+				CreatedMapper{},
+				AddressedMapper{},
+				WrittenMapper{},
+				SentMapper{},
+			},
+		),
+	)
+}
+
 type Created struct {
 	ID string `json:"id"`
 }

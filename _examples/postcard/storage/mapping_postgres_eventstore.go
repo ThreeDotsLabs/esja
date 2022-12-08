@@ -93,7 +93,7 @@ func (CreatedMapper) SupportedEvent() stream.Event[*postcard.Postcard] {
 }
 
 func (CreatedMapper) StorageEvent() any {
-	return &Created{}
+	return Created{}
 }
 
 func (CreatedMapper) ToStorage(event stream.Event[*postcard.Postcard]) any {
@@ -104,7 +104,7 @@ func (CreatedMapper) ToStorage(event stream.Event[*postcard.Postcard]) any {
 }
 
 func (CreatedMapper) FromStorage(event any) stream.Event[*postcard.Postcard] {
-	e := event.(*Created)
+	e := event.(Created)
 	return postcard.Created{
 		ID: e.ID,
 	}
@@ -122,7 +122,7 @@ func (AddressedMapper) SupportedEvent() stream.Event[*postcard.Postcard] {
 }
 
 func (AddressedMapper) StorageEvent() any {
-	return &Addressed{}
+	return Addressed{}
 }
 
 func (AddressedMapper) ToStorage(event stream.Event[*postcard.Postcard]) any {
@@ -134,7 +134,7 @@ func (AddressedMapper) ToStorage(event stream.Event[*postcard.Postcard]) any {
 }
 
 func (AddressedMapper) FromStorage(event any) stream.Event[*postcard.Postcard] {
-	e := event.(*Addressed)
+	e := event.(Addressed)
 	return postcard.Addressed{
 		Sender:    postcard.Address(e.Sender),
 		Addressee: postcard.Address(e.Addressee),
@@ -159,7 +159,7 @@ func (WrittenMapper) SupportedEvent() stream.Event[*postcard.Postcard] {
 }
 
 func (WrittenMapper) StorageEvent() any {
-	return &Written{}
+	return Written{}
 }
 
 func (WrittenMapper) ToStorage(e stream.Event[*postcard.Postcard]) any {
@@ -170,7 +170,7 @@ func (WrittenMapper) ToStorage(e stream.Event[*postcard.Postcard]) any {
 }
 
 func (WrittenMapper) FromStorage(event any) stream.Event[*postcard.Postcard] {
-	e := event.(*Written)
+	e := event.(Written)
 	return postcard.Written{
 		Content: e.Content,
 	}
@@ -185,7 +185,7 @@ func (SentMapper) SupportedEvent() stream.Event[*postcard.Postcard] {
 }
 
 func (SentMapper) StorageEvent() any {
-	return &Sent{}
+	return Sent{}
 }
 
 func (SentMapper) ToStorage(event stream.Event[*postcard.Postcard]) any {

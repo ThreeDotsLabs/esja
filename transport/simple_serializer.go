@@ -2,8 +2,9 @@ package transport
 
 import (
 	"fmt"
-	"github.com/ThreeDotsLabs/esja/stream"
 	"reflect"
+
+	"github.com/ThreeDotsLabs/esja/stream"
 )
 
 type SimpleSerializer[T any] struct {
@@ -42,7 +43,7 @@ func (m *SimpleSerializer[T]) Deserialize(streamID stream.ID, name stream.EventN
 
 	event := reflect.New(reflect.TypeOf(e)).Interface().(stream.Event[T])
 
-	err = m.marshaler.Unmarshal(streamID, payload, event)
+	err = m.marshaler.Unmarshal(streamID, payload, &event)
 	if err != nil {
 		return nil, err
 	}

@@ -1,10 +1,11 @@
 package stream_test
 
 import (
-	"github.com/ThreeDotsLabs/esja/stream"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/ThreeDotsLabs/esja/stream"
 )
 
 type Stream struct{}
@@ -17,7 +18,7 @@ func (e Event) EventName() stream.EventName {
 	return "Event"
 }
 
-func (e Event) Apply(a Stream) error {
+func (e Event) ApplyTo(a Stream) error {
 	return nil
 }
 

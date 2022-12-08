@@ -3,6 +3,7 @@ package eventstore
 import (
 	"context"
 	"errors"
+
 	"github.com/ThreeDotsLabs/esja/stream"
 )
 

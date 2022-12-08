@@ -6,40 +6,34 @@ package stream
 // In order for your domain type to implement Stream:
 //   * Embed Events
 //   * Implement `StreamID` returning a unique identifier (usually the same as your stream's internal ID).
-//   * Implement `FromEvents` to apply events to your stream.
 //   * Implement `PopEvents` that returns the events on the Events.
+//   * Implement `FromEvents` to apply events to your stream.
+//
+// Then an EventStore will be able to store and load it.
 //
 // Example:
 //
-//     type MyAggregate struct {
-//         events stream.Events[*MyAggregate]
+//     type User struct {
+//         events stream.Events[*User]
 //         id string
 //     }
 //
-//     func (a *MyAggregate) StreamID() aggregate.ID {
-//         return aggregate.ID(a.id)
+//     func (u *User) StreamID() stream.ID {
+//         return stream.ID(u.id)
 //     }
 //
-//     func (a *MyAggregate) PopEvents() []aggregate.VersionedEvent[*MyAggregate] {
-//         return p.es.PopEvents()
+//     func (u *User) PopEvents() []stream.VersionedEvent[*User] {
+//         return u.events.PopEvents()
 //     }
 //
-//     func (a *MyAggregate) FromEvents(events []aggregate.VersionedEvent[*MyAggregate]) error {
-//         es, err := aggregate.LoadEvents(a, events)
-//         if err != nil {
-//             return err
-//         }
-//
-//         p.es = es
-//
-//         return nil
+//     func (u *User) FromEvents(events stream.Events[*User]) error {
+//         p.events = events
+//         return stream.ApplyAll(p)
 //     }
-//
-// Then an EventStore will be able to store and load it.
-type Stream[A any] interface {
+type Stream[T any] interface {
 	StreamID() ID
-	PopEvents() []VersionedEvent[A]
-	FromEvents(eq Events[A]) error
+	PopEvents() []VersionedEvent[T]
+	FromEvents(eq Events[T]) error
 }
 
 // ID is the unique identifier of a stream.
@@ -49,13 +43,24 @@ func (i ID) String() string {
 	return string(i)
 }
 
-func Record[A any](agg A, eq *Events[A], e Event[A]) error {
-	err := e.ApplyTo(agg)
+func Record[T any](stream T, events *Events[T], e Event[T]) error {
+	err := e.ApplyTo(stream)
 	if err != nil {
 		return err
 	}
 
-	eq.Record(e)
+	events.Record(e)
+
+	return nil
+}
+
+func ApplyAll[T Stream[T]](stream T) error {
+	for _, e := range stream.PopEvents() {
+		err := e.ApplyTo(stream)
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }

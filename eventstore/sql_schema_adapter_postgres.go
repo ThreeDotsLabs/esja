@@ -20,12 +20,12 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_stream_id_version ON %[1]s (stream_id, str
 `
 
 type PostgresSchemaAdapter[A any] struct {
-	aggregateType string
+	streamType string
 }
 
-func NewPostgresSchemaAdapter[A any](aggregateType string) PostgresSchemaAdapter[A] {
+func NewPostgresSchemaAdapter[A any](streamType string) PostgresSchemaAdapter[A] {
 	return PostgresSchemaAdapter[A]{
-		aggregateType: aggregateType,
+		streamType: streamType,
 	}
 }
 
@@ -33,7 +33,7 @@ func (a PostgresSchemaAdapter[A]) InitializeSchemaQuery() string {
 	return fmt.Sprintf(postgresInitializeSchemaQuery, defaultEventsTableName)
 }
 
-func (a PostgresSchemaAdapter[A]) SelectQuery(aggregateID string) (string, []any, error) {
+func (a PostgresSchemaAdapter[A]) SelectQuery(streamID string) (string, []any, error) {
 	query := fmt.Sprintf(defaultSelectQuery, defaultEventsTableName)
 
 	args := []any{

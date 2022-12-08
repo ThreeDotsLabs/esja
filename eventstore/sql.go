@@ -5,8 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/ThreeDotsLabs/esja/stream"
 	"reflect"
+
+	"github.com/ThreeDotsLabs/esja/stream"
 )
 
 // ContextExecutor can perform SQL queries with context

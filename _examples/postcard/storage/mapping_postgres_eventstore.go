@@ -4,9 +4,11 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/ThreeDotsLabs/esja/example/postcard"
-	"github.com/ThreeDotsLabs/esja/pkg/eventstore"
-	"github.com/ThreeDotsLabs/esja/pkg/transport"
+	"github.com/ThreeDotsLabs/esja/eventstore"
+	"github.com/ThreeDotsLabs/esja/stream"
+	"github.com/ThreeDotsLabs/esja/transport"
+
+	"postcard"
 )
 
 func NewDefaultMappingPostgresRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[*postcard.Postcard], error) {
@@ -102,7 +104,7 @@ func (CreatedMapper) ToStorage(event stream.Event[*postcard.Postcard]) any {
 }
 
 func (CreatedMapper) FromStorage(event any) stream.Event[*postcard.Postcard] {
-	e := event.(Created)
+	e := event.(*Created)
 	return postcard.Created{
 		ID: e.ID,
 	}
@@ -132,7 +134,7 @@ func (AddressedMapper) ToStorage(event stream.Event[*postcard.Postcard]) any {
 }
 
 func (AddressedMapper) FromStorage(event any) stream.Event[*postcard.Postcard] {
-	e := event.(Addressed)
+	e := event.(*Addressed)
 	return postcard.Addressed{
 		Sender:    postcard.Address(e.Sender),
 		Addressee: postcard.Address(e.Addressee),
@@ -168,7 +170,7 @@ func (WrittenMapper) ToStorage(e stream.Event[*postcard.Postcard]) any {
 }
 
 func (WrittenMapper) FromStorage(event any) stream.Event[*postcard.Postcard] {
-	e := event.(Written)
+	e := event.(*Written)
 	return postcard.Written{
 		Content: e.Content,
 	}

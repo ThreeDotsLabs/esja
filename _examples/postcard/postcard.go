@@ -2,6 +2,7 @@ package postcard
 
 import (
 	"fmt"
+
 	"github.com/ThreeDotsLabs/esja/stream"
 )
 
@@ -42,19 +43,9 @@ func (p *Postcard) PopEvents() []stream.VersionedEvent[*Postcard] {
 	return p.events.PopEvents()
 }
 
-func (p *Postcard) FromEvents(eq stream.Events[*Postcard]) error {
-	events := eq.PopEvents()
-
-	for _, e := range events {
-		err := e.ApplyTo(p)
-		if err != nil {
-			return err
-		}
-	}
-
-	p.events = eq
-
-	return nil
+func (p *Postcard) FromEvents(events stream.Events[*Postcard]) error {
+	p.events = events
+	return stream.ApplyAll(p)
 }
 
 func (p *Postcard) ID() string {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/google/uuid"
@@ -12,10 +13,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ThreeDotsLabs/esja/example/postcard"
-	"github.com/ThreeDotsLabs/esja/example/storage"
-	"github.com/ThreeDotsLabs/esja/pkg/eventstore"
+	"github.com/ThreeDotsLabs/esja/eventstore"
 	"github.com/ThreeDotsLabs/esja/stream"
+
+	"postcard"
+	"postcard/storage"
 )
 
 var (

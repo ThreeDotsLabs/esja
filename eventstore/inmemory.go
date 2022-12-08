@@ -3,9 +3,10 @@ package eventstore
 import (
 	"context"
 	"errors"
-	"github.com/ThreeDotsLabs/esja/stream"
 	"reflect"
 	"sync"
+
+	"github.com/ThreeDotsLabs/esja/stream"
 )
 
 type InMemoryStore[T stream.Stream[T]] struct {

@@ -1,5 +1,7 @@
 package postcard
 
+import "github.com/ThreeDotsLabs/esja/stream"
+
 type Created struct {
 	ID string
 }
@@ -8,7 +10,7 @@ func (Created) EventName() stream.EventName {
 	return "Created_v1"
 }
 
-func (e Created) Apply(p *Postcard) error {
+func (e Created) ApplyTo(p *Postcard) error {
 	p.id = e.ID
 	return nil
 }
@@ -22,7 +24,7 @@ func (Addressed) EventName() stream.EventName {
 	return "Addressed_v1"
 }
 
-func (e Addressed) Apply(p *Postcard) error {
+func (e Addressed) ApplyTo(p *Postcard) error {
 	p.sender = e.Sender
 	p.addressee = e.Addressee
 	return nil
@@ -36,7 +38,7 @@ func (Written) EventName() stream.EventName {
 	return "Written_v1"
 }
 
-func (e Written) Apply(p *Postcard) error {
+func (e Written) ApplyTo(p *Postcard) error {
 	p.content = e.Content
 	return nil
 }
@@ -47,7 +49,7 @@ func (Sent) EventName() stream.EventName {
 	return "Sent_v1"
 }
 
-func (e Sent) Apply(p *Postcard) error {
+func (e Sent) ApplyTo(p *Postcard) error {
 	p.sent = true
 	return nil
 }

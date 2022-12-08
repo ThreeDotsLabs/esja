@@ -1,43 +1,43 @@
 package transport
 
 import (
-	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
 	"github.com/ThreeDotsLabs/esja/pkg/pii"
+	"github.com/ThreeDotsLabs/esja/stream"
 )
 
 type AESAnonymizingSerializer[T any] struct {
 	serializer EventSerializer[T]
-	anonymizer pii.StructAnonymizer[aggregate.ID]
+	anonymizer pii.StructAnonymizer[stream.ID]
 }
 
 func NewAESAnonymizingSerializer[T any](
 	serializer EventSerializer[T],
-	secretProvider pii.SecretProvider[aggregate.ID],
+	secretProvider pii.SecretProvider[stream.ID],
 ) *AESAnonymizingSerializer[T] {
 	return &AESAnonymizingSerializer[T]{
 		serializer: serializer,
-		anonymizer: pii.NewStructAnonymizer[aggregate.ID](
-			pii.NewAESAnonymizer[aggregate.ID](secretProvider),
+		anonymizer: pii.NewStructAnonymizer[stream.ID](
+			pii.NewAESAnonymizer[stream.ID](secretProvider),
 		),
 	}
 }
 
-func (s *AESAnonymizingSerializer[T]) Serialize(aggregateID aggregate.ID, event aggregate.Event[T]) ([]byte, error) {
-	err := s.anonymizer.Anonymize(aggregateID, event)
+func (s *AESAnonymizingSerializer[T]) Serialize(streamID stream.ID, event stream.Event[T]) ([]byte, error) {
+	err := s.anonymizer.Anonymize(streamID, event)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.serializer.Serialize(aggregateID, event)
+	return s.serializer.Serialize(streamID, event)
 }
 
-func (s *AESAnonymizingSerializer[T]) Deserialize(aggregateID aggregate.ID, name aggregate.EventName, payload []byte) (aggregate.Event[T], error) {
-	event, err := s.serializer.Deserialize(aggregateID, name, payload)
+func (s *AESAnonymizingSerializer[T]) Deserialize(streamID stream.ID, name stream.EventName, payload []byte) (stream.Event[T], error) {
+	event, err := s.serializer.Deserialize(streamID, name, payload)
 	if err != nil {
 		return nil, err
 	}
 
-	err = s.anonymizer.Deanonymize(aggregateID, event)
+	err = s.anonymizer.Deanonymize(streamID, event)
 	if err != nil {
 		return nil, err
 	}

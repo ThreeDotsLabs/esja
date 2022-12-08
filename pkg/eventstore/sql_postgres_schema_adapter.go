@@ -8,12 +8,12 @@ import (
 const eventsTableName = "events"
 
 type PostgresSchemaAdapter[A any] struct {
-	aggregateType string
+	streamType string
 }
 
-func NewPostgresSchemaAdapter[A any](aggregateType string) PostgresSchemaAdapter[A] {
+func NewPostgresSchemaAdapter[A any](streamType string) PostgresSchemaAdapter[A] {
 	return PostgresSchemaAdapter[A]{
-		aggregateType: aggregateType,
+		streamType: streamType,
 	}
 }
 
@@ -22,32 +22,32 @@ func (a PostgresSchemaAdapter[A]) InitializeSchemaQuery() string {
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS %[1]s (
 		id serial NOT NULL PRIMARY KEY,
-		aggregate_id uuid NOT NULL, -- assuming uuid will be used; if you have a different id, implement your own adapter
-		aggregate_version int NOT NULL,
-		aggregate_type varchar(255) NOT NULL,
+		stream_id uuid NOT NULL, -- assuming uuid will be used; if you have a different id, implement your own adapter
+		stream_version int NOT NULL,
+		stream_type varchar(255) NOT NULL,
 		event_name varchar(255) NOT NULL,
 		event_payload JSONB NOT NULL,
 		stored_at TIMESTAMP NOT NULL DEFAULT NOW()
 );
-CREATE INDEX IF NOT EXISTS idx_aggregate_id ON %[1]s (aggregate_id);
-CREATE UNIQUE INDEX IF NOT EXISTS idx_aggregate_id_version ON %[1]s (aggregate_id, aggregate_version);
+CREATE INDEX IF NOT EXISTS idx_stream_id ON %[1]s (stream_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_stream_id_version ON %[1]s (stream_id, stream_version);
 `
 	return fmt.Sprintf(query, eventsTableName)
 }
 
-func (a PostgresSchemaAdapter[A]) SelectQuery(aggregateID string) (string, []any, error) {
+func (a PostgresSchemaAdapter[A]) SelectQuery(streamID string) (string, []any, error) {
 	query := `
 SELECT 
-	aggregate_id, aggregate_version, event_name, event_payload 
+	stream_id, stream_version, event_name, event_payload 
 FROM "%s"
-WHERE aggregate_id = $1 AND aggregate_type = $2
-ORDER BY aggregate_version ASC;
+WHERE stream_id = $1 AND stream_type = $2
+ORDER BY stream_version ASC;
 `
 
 	query = fmt.Sprintf(query, eventsTableName)
 
 	args := []any{
-		aggregateID, a.aggregateType,
+		streamID, a.streamType,
 	}
 
 	return query, args, nil
@@ -55,7 +55,7 @@ ORDER BY aggregate_version ASC;
 
 func (a PostgresSchemaAdapter[A]) InsertQuery(events []storageEvent[A]) (string, []any, error) {
 	query := `
-INSERT INTO %s (aggregate_id, aggregate_version, aggregate_type, event_name, event_payload)
+INSERT INTO %s (stream_id, stream_version, stream_type, event_name, event_payload)
 VALUES %s`
 
 	query = fmt.Sprintf(query, eventsTableName, defaultInsertMarkers(len(events)))
@@ -65,9 +65,9 @@ VALUES %s`
 	for _, e := range events {
 		args = append(
 			args,
-			e.aggregateID,
-			e.AggregateVersion,
-			a.aggregateType,
+			e.streamID,
+			e.StreamVersion,
+			a.streamType,
 			e.EventName(),
 			e.payload,
 		)

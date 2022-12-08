@@ -1,23 +1,21 @@
 package postcard_test
 
 import (
+	postcard2 "github.com/ThreeDotsLabs/esja/example/postcard"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/ThreeDotsLabs/esja/example/aggregate/postcard"
-	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
 )
 
 var (
-	senderAddress = postcard.Address{
+	senderAddress = postcard2.Address{
 		Name:  "Alice",
 		Line1: "Foo Street 123",
 		Line2: "Barville",
 	}
-	addresseeAddress = postcard.Address{
+	addresseeAddress = postcard2.Address{
 		Name:  "Bob",
 		Line1: "987 Xyz Avenue",
 		Line2: "Qux City",
@@ -29,7 +27,7 @@ func TestPostcard_Lifecycle(t *testing.T) {
 
 	assert := assert.New(t)
 
-	pc, err := postcard.NewPostcard(id)
+	pc, err := postcard2.NewPostcard(id)
 	assert.Equal(id, pc.ID())
 	assert.NoError(err)
 
@@ -50,17 +48,17 @@ func TestPostcard_Lifecycle(t *testing.T) {
 	events := pc.PopEvents()
 	assert.Len(events, 3)
 
-	expectedEvents := []aggregate.VersionedEvent[*postcard.Postcard]{
-		{Event: &postcard.Created{ID: id}, AggregateVersion: 1},
-		{Event: &postcard.Addressed{Sender: senderAddress, Addressee: addresseeAddress}, AggregateVersion: 2},
-		{Event: &postcard.Written{Content: "content"}, AggregateVersion: 3},
+	expectedEvents := []stream.VersionedEvent[*postcard2.Postcard]{
+		{Event: &postcard2.Created{ID: id}, AggregateVersion: 1},
+		{Event: &postcard2.Addressed{Sender: senderAddress, Addressee: addresseeAddress}, AggregateVersion: 2},
+		{Event: &postcard2.Written{Content: "content"}, AggregateVersion: 3},
 	}
 	assert.Equal(expectedEvents, events)
 
-	eq, err := aggregate.LoadEvents(events)
+	eq, err := stream.LoadEvents(events)
 	assert.NoError(err)
 
-	pcLoaded := postcard.Postcard{}
+	pcLoaded := postcard2.Postcard{}
 	err = pcLoaded.FromEvents(eq)
 	assert.NoError(err)
 
@@ -85,9 +83,9 @@ func TestPostcard_Lifecycle(t *testing.T) {
 	events = pcLoaded.PopEvents()
 	assert.Len(events, 2)
 
-	expectedEvents = []aggregate.VersionedEvent[*postcard.Postcard]{
-		{Event: &postcard.Written{Content: "new content"}, AggregateVersion: 4},
-		{Event: &postcard.Sent{}, AggregateVersion: 5},
+	expectedEvents = []stream.VersionedEvent[*postcard2.Postcard]{
+		{Event: &postcard2.Written{Content: "new content"}, AggregateVersion: 4},
+		{Event: &postcard2.Sent{}, AggregateVersion: 5},
 	}
 
 	assert.Equal(expectedEvents, events)

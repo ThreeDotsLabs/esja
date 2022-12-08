@@ -3,19 +3,18 @@ package storage
 import (
 	"context"
 	"database/sql"
+	postcard2 "github.com/ThreeDotsLabs/esja/example/postcard"
 
-	"github.com/ThreeDotsLabs/esja/example/aggregate/postcard"
-	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
 	"github.com/ThreeDotsLabs/esja/pkg/eventstore"
 	"github.com/ThreeDotsLabs/esja/pkg/transport"
 )
 
-func NewDefaultMappingPostgresRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[*postcard.Postcard], error) {
-	return eventstore.NewSQLStore[*postcard.Postcard](
+func NewDefaultMappingPostgresRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[*postcard2.Postcard], error) {
+	return eventstore.NewSQLStore[*postcard2.Postcard](
 		ctx,
 		db,
-		eventstore.NewMappingPostgresSQLConfig[*postcard.Postcard](
-			[]transport.EventMapper[*postcard.Postcard]{
+		eventstore.NewMappingPostgresSQLConfig[*postcard2.Postcard](
+			[]transport.EventMapper[*postcard2.Postcard]{
 				CreatedMapper{},
 				AddressedMapper{},
 				WrittenMapper{},
@@ -25,15 +24,15 @@ func NewDefaultMappingPostgresRepository(ctx context.Context, db *sql.DB) (event
 	)
 }
 
-func NewCustomMappingPostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[*postcard.Postcard], error) {
-	return eventstore.NewSQLStore[*postcard.Postcard](
+func NewCustomMappingPostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[*postcard2.Postcard], error) {
+	return eventstore.NewSQLStore[*postcard2.Postcard](
 		ctx,
 		db,
-		eventstore.SQLConfig[*postcard.Postcard]{
-			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[*postcard.Postcard]("PostcardMapping"),
+		eventstore.SQLConfig[*postcard2.Postcard]{
+			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[*postcard2.Postcard]("PostcardMapping"),
 			Serializer: transport.NewMappingSerializer(
 				transport.JSONMarshaler{},
-				[]transport.EventMapper[*postcard.Postcard]{
+				[]transport.EventMapper[*postcard2.Postcard]{
 					CreatedMapper{},
 					AddressedMapper{},
 					WrittenMapper{},
@@ -44,16 +43,16 @@ func NewCustomMappingPostcardRepository(ctx context.Context, db *sql.DB) (events
 	)
 }
 
-func NewMappingAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[*postcard.Postcard], error) {
-	return eventstore.NewSQLStore[*postcard.Postcard](
+func NewMappingAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[*postcard2.Postcard], error) {
+	return eventstore.NewSQLStore[*postcard2.Postcard](
 		ctx,
 		db,
-		eventstore.SQLConfig[*postcard.Postcard]{
-			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[*postcard.Postcard]("PostcardMappingAnonymizing"),
-			Serializer: transport.NewAESAnonymizingSerializer[*postcard.Postcard](
-				transport.NewMappingSerializer[*postcard.Postcard](
+		eventstore.SQLConfig[*postcard2.Postcard]{
+			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[*postcard2.Postcard]("PostcardMappingAnonymizing"),
+			Serializer: transport.NewAESAnonymizingSerializer[*postcard2.Postcard](
+				transport.NewMappingSerializer[*postcard2.Postcard](
 					transport.JSONMarshaler{},
-					[]transport.EventMapper[*postcard.Postcard]{
+					[]transport.EventMapper[*postcard2.Postcard]{
 						CreatedMapper{},
 						AddressedMapper{},
 						WrittenMapper{},
@@ -72,24 +71,24 @@ type Created struct {
 
 type CreatedMapper struct{}
 
-func (CreatedMapper) SupportedEvent() aggregate.Event[*postcard.Postcard] {
-	return postcard.Created{}
+func (CreatedMapper) SupportedEvent() stream.Event[*postcard2.Postcard] {
+	return postcard2.Created{}
 }
 
 func (CreatedMapper) StorageEvent() any {
 	return &Created{}
 }
 
-func (CreatedMapper) ToStorage(event aggregate.Event[*postcard.Postcard]) any {
-	e := event.(*postcard.Created)
+func (CreatedMapper) ToStorage(event stream.Event[*postcard2.Postcard]) any {
+	e := event.(*postcard2.Created)
 	return &Created{
 		ID: e.ID,
 	}
 }
 
-func (CreatedMapper) FromStorage(event any) aggregate.Event[*postcard.Postcard] {
+func (CreatedMapper) FromStorage(event any) stream.Event[*postcard2.Postcard] {
 	e := event.(*Created)
-	return &postcard.Created{
+	return &postcard2.Created{
 		ID: e.ID,
 	}
 }
@@ -101,27 +100,27 @@ type Addressed struct {
 
 type AddressedMapper struct{}
 
-func (AddressedMapper) SupportedEvent() aggregate.Event[*postcard.Postcard] {
-	return postcard.Addressed{}
+func (AddressedMapper) SupportedEvent() stream.Event[*postcard2.Postcard] {
+	return postcard2.Addressed{}
 }
 
 func (AddressedMapper) StorageEvent() any {
 	return &Addressed{}
 }
 
-func (AddressedMapper) ToStorage(event aggregate.Event[*postcard.Postcard]) any {
-	e := event.(*postcard.Addressed)
+func (AddressedMapper) ToStorage(event stream.Event[*postcard2.Postcard]) any {
+	e := event.(*postcard2.Addressed)
 	return &Addressed{
 		Sender:    Address(e.Sender),
 		Addressee: Address(e.Addressee),
 	}
 }
 
-func (AddressedMapper) FromStorage(event any) aggregate.Event[*postcard.Postcard] {
+func (AddressedMapper) FromStorage(event any) stream.Event[*postcard2.Postcard] {
 	e := event.(*Addressed)
-	return &postcard.Addressed{
-		Sender:    postcard.Address(e.Sender),
-		Addressee: postcard.Address(e.Addressee),
+	return &postcard2.Addressed{
+		Sender:    postcard2.Address(e.Sender),
+		Addressee: postcard2.Address(e.Addressee),
 	}
 }
 
@@ -138,24 +137,24 @@ type Written struct {
 
 type WrittenMapper struct{}
 
-func (WrittenMapper) SupportedEvent() aggregate.Event[*postcard.Postcard] {
-	return postcard.Written{}
+func (WrittenMapper) SupportedEvent() stream.Event[*postcard2.Postcard] {
+	return postcard2.Written{}
 }
 
 func (WrittenMapper) StorageEvent() any {
 	return &Written{}
 }
 
-func (WrittenMapper) ToStorage(e aggregate.Event[*postcard.Postcard]) any {
-	ev := e.(*postcard.Written)
+func (WrittenMapper) ToStorage(e stream.Event[*postcard2.Postcard]) any {
+	ev := e.(*postcard2.Written)
 	return &Written{
 		Content: ev.Content,
 	}
 }
 
-func (WrittenMapper) FromStorage(event any) aggregate.Event[*postcard.Postcard] {
+func (WrittenMapper) FromStorage(event any) stream.Event[*postcard2.Postcard] {
 	e := event.(*Written)
-	return &postcard.Written{
+	return &postcard2.Written{
 		Content: e.Content,
 	}
 }
@@ -164,18 +163,18 @@ type Sent struct{}
 
 type SentMapper struct{}
 
-func (SentMapper) SupportedEvent() aggregate.Event[*postcard.Postcard] {
-	return postcard.Sent{}
+func (SentMapper) SupportedEvent() stream.Event[*postcard2.Postcard] {
+	return postcard2.Sent{}
 }
 
 func (SentMapper) StorageEvent() any {
 	return &Sent{}
 }
 
-func (SentMapper) ToStorage(event aggregate.Event[*postcard.Postcard]) any {
+func (SentMapper) ToStorage(event stream.Event[*postcard2.Postcard]) any {
 	return &Sent{}
 }
 
-func (SentMapper) FromStorage(event any) aggregate.Event[*postcard.Postcard] {
-	return &postcard.Sent{}
+func (SentMapper) FromStorage(event any) stream.Event[*postcard2.Postcard] {
+	return &postcard2.Sent{}
 }

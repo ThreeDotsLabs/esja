@@ -1,24 +1,23 @@
-package aggregate_test
+package stream_test
 
 import (
+	"github.com/ThreeDotsLabs/esja/stream"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
 )
 
-type Aggregate struct{}
+type Stream struct{}
 
 type Event struct {
 	ID int
 }
 
-func (e Event) EventName() aggregate.EventName {
+func (e Event) EventName() stream.EventName {
 	return "Event"
 }
 
-func (e Event) Apply(a Aggregate) error {
+func (e Event) Apply(a Stream) error {
 	return nil
 }
 
@@ -26,7 +25,7 @@ func TestNewEventsQueue(t *testing.T) {
 	event1 := Event{ID: 1}
 	event2 := Event{ID: 2}
 
-	es := aggregate.Events[Aggregate]{}
+	es := stream.Events[Stream]{}
 
 	events := es.PopEvents()
 	assert.Len(t, events, 0)
@@ -38,10 +37,10 @@ func TestNewEventsQueue(t *testing.T) {
 	assert.Len(t, events, 2)
 
 	assert.Equal(t, event1, events[0].Event)
-	assert.Equal(t, 1, events[0].AggregateVersion)
+	assert.Equal(t, 1, events[0].StreamVersion)
 
 	assert.Equal(t, event2, events[1].Event)
-	assert.Equal(t, 2, events[1].AggregateVersion)
+	assert.Equal(t, 2, events[1].StreamVersion)
 
 	events = es.PopEvents()
 	assert.Len(t, events, 0)
@@ -54,5 +53,5 @@ func TestNewEventsQueue(t *testing.T) {
 	assert.Len(t, events, 1)
 
 	assert.Equal(t, event3, events[0].Event)
-	assert.Equal(t, 3, events[0].AggregateVersion)
+	assert.Equal(t, 3, events[0].StreamVersion)
 }

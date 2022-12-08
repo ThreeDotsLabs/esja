@@ -2,12 +2,11 @@ package postcard
 
 import (
 	"fmt"
-
-	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
+	"github.com/ThreeDotsLabs/esja/stream"
 )
 
 type Postcard struct {
-	events aggregate.Events[*Postcard]
+	events stream.Events[*Postcard]
 
 	id string
 
@@ -29,7 +28,7 @@ type Address struct {
 func NewPostcard(id string) (*Postcard, error) {
 	p := &Postcard{}
 
-	err := aggregate.Record[*Postcard](p, &p.events, &Created{
+	err := stream.Record[*Postcard](p, &p.events, &Created{
 		ID: id,
 	})
 	if err != nil {
@@ -39,15 +38,15 @@ func NewPostcard(id string) (*Postcard, error) {
 	return p, nil
 }
 
-func (p *Postcard) PopEvents() []aggregate.VersionedEvent[*Postcard] {
+func (p *Postcard) PopEvents() []stream.VersionedEvent[*Postcard] {
 	return p.events.PopEvents()
 }
 
-func (p *Postcard) FromEvents(eq aggregate.Events[*Postcard]) error {
+func (p *Postcard) FromEvents(eq stream.Events[*Postcard]) error {
 	events := eq.PopEvents()
 
 	for _, e := range events {
-		err := e.Apply(p)
+		err := e.ApplyTo(p)
 		if err != nil {
 			return err
 		}
@@ -62,18 +61,18 @@ func (p *Postcard) ID() string {
 	return p.id
 }
 
-func (p *Postcard) AggregateID() aggregate.ID {
-	return aggregate.ID(p.id)
+func (p *Postcard) StreamID() stream.ID {
+	return stream.ID(p.id)
 }
 
 func (p *Postcard) Write(content string) error {
-	return aggregate.Record[*Postcard](p, &p.events, &Written{
+	return stream.Record[*Postcard](p, &p.events, &Written{
 		Content: content,
 	})
 }
 
 func (p *Postcard) Address(sender Address, addressee Address) error {
-	return aggregate.Record[*Postcard](p, &p.events, &Addressed{
+	return stream.Record[*Postcard](p, &p.events, &Addressed{
 		Sender:    sender,
 		Addressee: addressee,
 	})
@@ -84,7 +83,7 @@ func (p *Postcard) Send() error {
 		return fmt.Errorf("postcard already sent")
 	}
 
-	return aggregate.Record[*Postcard](p, &p.events, &Sent{})
+	return stream.Record[*Postcard](p, &p.events, &Sent{})
 }
 
 func (p *Postcard) Sender() Address {

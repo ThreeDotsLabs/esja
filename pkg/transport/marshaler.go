@@ -2,21 +2,20 @@ package transport
 
 import (
 	"encoding/json"
-
-	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
+	"github.com/ThreeDotsLabs/esja/stream"
 )
 
 type Marshaler interface {
-	Marshal(aggregateID aggregate.ID, data interface{}) ([]byte, error)
-	Unmarshal(aggregateID aggregate.ID, bytes []byte, target interface{}) error
+	Marshal(streamID stream.ID, data interface{}) ([]byte, error)
+	Unmarshal(streamID stream.ID, bytes []byte, target interface{}) error
 }
 
 type JSONMarshaler struct{}
 
-func (JSONMarshaler) Marshal(_ aggregate.ID, data interface{}) ([]byte, error) {
+func (JSONMarshaler) Marshal(_ stream.ID, data interface{}) ([]byte, error) {
 	return json.Marshal(data)
 }
 
-func (JSONMarshaler) Unmarshal(_ aggregate.ID, bytes []byte, target interface{}) error {
+func (JSONMarshaler) Unmarshal(_ stream.ID, bytes []byte, target interface{}) error {
 	return json.Unmarshal(bytes, target)
 }

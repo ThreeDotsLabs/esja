@@ -3,7 +3,6 @@ package eventstore
 import (
 	"fmt"
 
-	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
 	"github.com/ThreeDotsLabs/esja/pkg/transport"
 )
 
@@ -23,7 +22,7 @@ func (c SQLConfig[T]) validate() error {
 }
 
 func NewPostgresSQLConfig[T any](
-	supportedEvents []aggregate.Event[T],
+	supportedEvents []stream.Event[T],
 ) SQLConfig[T] {
 	return SQLConfig[T]{
 		SchemaAdapter: NewPostgresSchemaAdapter[T](""),

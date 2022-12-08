@@ -1,21 +1,22 @@
-package aggregate
+package stream
 
-// Aggregate represents the type saved and loaded by the event store.
+// Stream represents the type saved and loaded by the event store.
+// In DDD terms, it is the "aggregate root".
 //
-// In order for your domain type to implement Aggregate:
+// In order for your domain type to implement Stream:
 //   * Embed Events
-//   * Implement `AggregateID` returning a unique identifier (usually the same as your aggregate's internal ID).
-//   * Implement `FromEvents` to apply events to your aggregate.
+//   * Implement `StreamID` returning a unique identifier (usually the same as your stream's internal ID).
+//   * Implement `FromEvents` to apply events to your stream.
 //   * Implement `PopEvents` that returns the events on the Events.
 //
 // Example:
 //
 //     type MyAggregate struct {
-//         es aggregate.Events[*MyAggregate]
+//         events stream.Events[*MyAggregate]
 //         id string
 //     }
 //
-//     func (a *MyAggregate) AggregateID() aggregate.ID {
+//     func (a *MyAggregate) StreamID() aggregate.ID {
 //         return aggregate.ID(a.id)
 //     }
 //
@@ -35,13 +36,13 @@ package aggregate
 //     }
 //
 // Then an EventStore will be able to store and load it.
-type Aggregate[A any] interface {
-	AggregateID() ID
+type Stream[A any] interface {
+	StreamID() ID
 	PopEvents() []VersionedEvent[A]
 	FromEvents(eq Events[A]) error
 }
 
-// ID is the unique identifier of an aggregate.
+// ID is the unique identifier of a stream.
 type ID string
 
 func (i ID) String() string {
@@ -49,7 +50,7 @@ func (i ID) String() string {
 }
 
 func Record[A any](agg A, eq *Events[A], e Event[A]) error {
-	err := e.Apply(agg)
+	err := e.ApplyTo(agg)
 	if err != nil {
 		return err
 	}

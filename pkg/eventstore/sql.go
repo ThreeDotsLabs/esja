@@ -5,9 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/ThreeDotsLabs/esja/stream"
 	"reflect"
-
-	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
 )
 
 // ContextExecutor can perform SQL queries with context
@@ -17,27 +16,27 @@ type ContextExecutor interface {
 }
 
 type storageEvent[A any] struct {
-	aggregate.VersionedEvent[A]
-	aggregateID string
-	payload     []byte
+	stream.VersionedEvent[A]
+	streamID string
+	payload  []byte
 }
 
 type schemaAdapter[A any] interface {
 	InitializeSchemaQuery() string
-	SelectQuery(aggregateID string) (string, []any, error)
+	SelectQuery(streamID string) (string, []any, error)
 	InsertQuery(events []storageEvent[A]) (string, []any, error)
 }
 
 // SQLStore is an implementation of the EventStore interface using an SQLStore database.
-type SQLStore[T aggregate.Aggregate[T]] struct {
+type SQLStore[T stream.Stream[T]] struct {
 	db     ContextExecutor
 	config SQLConfig[T]
 }
 
 // NewSQLStore creates a new SQL EventStore.
-// The aggregateType is used to identify the aggregate type in the database. It should be a constant string and not change.
+// The streamType is used to identify the stream type in the database. It should be a constant string and not change.
 // The serializer is used to translate the events to a database-friendly format and back.
-func NewSQLStore[T aggregate.Aggregate[T]](
+func NewSQLStore[T stream.Stream[T]](
 	ctx context.Context,
 	db ContextExecutor,
 	config SQLConfig[T],
@@ -73,9 +72,8 @@ func (s SQLStore[T]) initializeSchema(ctx context.Context) error {
 	return nil
 }
 
-// Load loads the aggregate from the database events.
-// The target should be a pointer to the aggregate.
-func (s SQLStore[T]) Load(ctx context.Context, id aggregate.ID) (T, error) {
+// Load loads the stream from the database events.
+func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (T, error) {
 	var target T
 
 	query, args, err := s.config.SchemaAdapter.SelectQuery(id.String())
@@ -92,35 +90,35 @@ func (s SQLStore[T]) Load(ctx context.Context, id aggregate.ID) (T, error) {
 	}()
 
 	var (
-		aggregateID      aggregate.ID
-		aggregateVersion int
-		eventName        aggregate.EventName
-		eventPayload     []byte
-		events           []aggregate.VersionedEvent[T]
+		streamID      stream.ID
+		streamVersion int
+		eventName     stream.EventName
+		eventPayload  []byte
+		events        []stream.VersionedEvent[T]
 	)
 	for results.Next() {
-		err = results.Scan(&aggregateID, &aggregateVersion, &eventName, &eventPayload)
+		err = results.Scan(&streamID, &streamVersion, &eventName, &eventPayload)
 		if err != nil {
 			return target, fmt.Errorf("error reading row result: %w", err)
 		}
 
-		event, err := s.config.Serializer.Deserialize(aggregateID, eventName, eventPayload)
+		event, err := s.config.Serializer.Deserialize(streamID, eventName, eventPayload)
 		if err != nil {
 			return target, fmt.Errorf("error deserializing event: %w", err)
 		}
 
-		versionedEvent := aggregate.VersionedEvent[T]{
-			Event:            event,
-			AggregateVersion: aggregateVersion,
+		versionedEvent := stream.VersionedEvent[T]{
+			Event:         event,
+			StreamVersion: streamVersion,
 		}
 		events = append(events, versionedEvent)
 	}
 
 	if len(events) == 0 {
-		return target, ErrAggregateNotFound
+		return target, ErrStreamNotFound
 	}
 
-	eq, err := aggregate.LoadEvents(events)
+	eq, err := stream.LoadEvents(events)
 	if err != nil {
 		return target, err
 	}
@@ -131,33 +129,33 @@ func (s SQLStore[T]) Load(ctx context.Context, id aggregate.ID) (T, error) {
 	}
 
 	newTarget := reflect.New(targetType).Interface()
-	agg := newTarget.(T)
+	loadedStream := newTarget.(T)
 
-	err = agg.FromEvents(eq)
+	err = loadedStream.FromEvents(eq)
 	if err != nil {
 		return target, err
 	}
 
-	return agg, nil
+	return loadedStream, nil
 }
 
-// Save saves the aggregate's queued events to the database.
-func (s SQLStore[T]) Save(ctx context.Context, agg T) (err error) {
-	events := agg.PopEvents()
+// Save saves the streams's queued events to the database.
+func (s SQLStore[T]) Save(ctx context.Context, stm T) (err error) {
+	events := stm.PopEvents()
 	if len(events) == 0 {
 		return errors.New("no events to save")
 	}
 
 	serializedEvents := make([]storageEvent[T], len(events))
 	for i, event := range events {
-		payload, err := s.config.Serializer.Serialize(agg.AggregateID(), event.Event)
+		payload, err := s.config.Serializer.Serialize(stm.StreamID(), event.Event)
 		if err != nil {
 			return fmt.Errorf("error serializing event: %w", err)
 		}
 
 		serializedEvents[i] = storageEvent[T]{
 			VersionedEvent: event,
-			aggregateID:    agg.AggregateID().String(),
+			streamID:       stm.StreamID().String(),
 			payload:        payload,
 		}
 	}

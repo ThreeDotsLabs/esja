@@ -3,25 +3,24 @@ package eventstore
 import (
 	"context"
 	"errors"
+	"github.com/ThreeDotsLabs/esja/stream"
 	"reflect"
 	"sync"
-
-	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
 )
 
-type InMemoryStore[T aggregate.Aggregate[T]] struct {
+type InMemoryStore[T stream.Stream[T]] struct {
 	lock   sync.RWMutex
-	events map[aggregate.ID][]aggregate.VersionedEvent[T]
+	events map[stream.ID][]stream.VersionedEvent[T]
 }
 
-func NewInMemoryStore[T aggregate.Aggregate[T]]() *InMemoryStore[T] {
+func NewInMemoryStore[T stream.Stream[T]]() *InMemoryStore[T] {
 	return &InMemoryStore[T]{
 		lock:   sync.RWMutex{},
-		events: map[aggregate.ID][]aggregate.VersionedEvent[T]{},
+		events: map[stream.ID][]stream.VersionedEvent[T]{},
 	}
 }
 
-func (i *InMemoryStore[T]) Load(_ context.Context, id aggregate.ID) (T, error) {
+func (i *InMemoryStore[T]) Load(_ context.Context, id stream.ID) (T, error) {
 	i.lock.RLock()
 	defer i.lock.RUnlock()
 
@@ -29,10 +28,10 @@ func (i *InMemoryStore[T]) Load(_ context.Context, id aggregate.ID) (T, error) {
 
 	events, ok := i.events[id]
 	if !ok {
-		return target, ErrAggregateNotFound
+		return target, ErrStreamNotFound
 	}
 
-	eq, err := aggregate.LoadEvents(events)
+	eq, err := stream.LoadEvents(events)
 	if err != nil {
 		return target, err
 	}
@@ -43,14 +42,14 @@ func (i *InMemoryStore[T]) Load(_ context.Context, id aggregate.ID) (T, error) {
 	}
 
 	newTarget := reflect.New(targetType).Interface()
-	agg := newTarget.(T)
+	loadedStream := newTarget.(T)
 
-	err = agg.FromEvents(eq)
+	err = loadedStream.FromEvents(eq)
 	if err != nil {
 		return target, err
 	}
 
-	return agg, nil
+	return loadedStream, nil
 }
 
 func (i *InMemoryStore[T]) Save(_ context.Context, a T) error {
@@ -62,16 +61,16 @@ func (i *InMemoryStore[T]) Save(_ context.Context, a T) error {
 		return errors.New("no events to save")
 	}
 
-	if priorEvents, ok := i.events[a.AggregateID()]; !ok {
-		i.events[a.AggregateID()] = events
+	if priorEvents, ok := i.events[a.StreamID()]; !ok {
+		i.events[a.StreamID()] = events
 	} else {
 		for _, event := range events {
 			if len(priorEvents) > 0 {
-				if priorEvents[len(priorEvents)-1].AggregateVersion >= event.AggregateVersion {
-					return errors.New("aggregate version duplicate")
+				if priorEvents[len(priorEvents)-1].StreamVersion >= event.StreamVersion {
+					return errors.New("stream version duplicate")
 				}
 			}
-			i.events[a.AggregateID()] = append(i.events[a.AggregateID()], event)
+			i.events[a.StreamID()] = append(i.events[a.StreamID()], event)
 		}
 	}
 

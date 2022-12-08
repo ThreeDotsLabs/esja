@@ -2,21 +2,20 @@ package transport
 
 import (
 	"fmt"
+	"github.com/ThreeDotsLabs/esja/stream"
 	"reflect"
-
-	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
 )
 
 type SimpleSerializer[T any] struct {
 	marshaler Marshaler
-	events    map[aggregate.EventName]aggregate.Event[T]
+	events    map[stream.EventName]stream.Event[T]
 }
 
 func NewSimpleSerializer[T any](
 	marshaler Marshaler,
-	supportedEvents []aggregate.Event[T],
+	supportedEvents []stream.Event[T],
 ) *SimpleSerializer[T] {
-	events := make(map[aggregate.EventName]aggregate.Event[T])
+	events := make(map[stream.EventName]stream.Event[T])
 	for _, c := range supportedEvents {
 		events[c.EventName()] = c
 	}
@@ -26,24 +25,24 @@ func NewSimpleSerializer[T any](
 	}
 }
 
-func (m *SimpleSerializer[T]) Serialize(aggregateID aggregate.ID, event aggregate.Event[T]) ([]byte, error) {
+func (m *SimpleSerializer[T]) Serialize(streamID stream.ID, event stream.Event[T]) ([]byte, error) {
 	_, err := m.eventByName(event.EventName())
 	if err != nil {
 		return nil, err
 	}
 
-	return m.marshaler.Marshal(aggregateID, event)
+	return m.marshaler.Marshal(streamID, event)
 }
 
-func (m *SimpleSerializer[T]) Deserialize(aggregateID aggregate.ID, name aggregate.EventName, payload []byte) (aggregate.Event[T], error) {
+func (m *SimpleSerializer[T]) Deserialize(streamID stream.ID, name stream.EventName, payload []byte) (stream.Event[T], error) {
 	e, err := m.eventByName(name)
 	if err != nil {
 		return nil, err
 	}
 
-	event := reflect.New(reflect.TypeOf(e)).Interface().(aggregate.Event[T])
+	event := reflect.New(reflect.TypeOf(e)).Interface().(stream.Event[T])
 
-	err = m.marshaler.Unmarshal(aggregateID, payload, event)
+	err = m.marshaler.Unmarshal(streamID, payload, event)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +50,7 @@ func (m *SimpleSerializer[T]) Deserialize(aggregateID aggregate.ID, name aggrega
 	return event, nil
 }
 
-func (m *SimpleSerializer[T]) eventByName(name aggregate.EventName) (aggregate.Event[T], error) {
+func (m *SimpleSerializer[T]) eventByName(name stream.EventName) (stream.Event[T], error) {
 	for n, event := range m.events {
 		if name == n {
 			return event, nil

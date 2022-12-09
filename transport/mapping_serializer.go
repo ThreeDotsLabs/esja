@@ -2,6 +2,8 @@ package transport
 
 import (
 	"fmt"
+	"reflect"
+
 	"github.com/ThreeDotsLabs/esja/stream"
 )
 
@@ -55,13 +57,16 @@ func (m *MappingSerializer[T]) Deserialize(streamID stream.ID, name stream.Event
 	}
 
 	event := mapper.StorageEvent()
+	newEvent := reflect.New(reflect.TypeOf(event)).Interface()
 
-	err = m.marshaler.Unmarshal(streamID, payload, event)
+	err = m.marshaler.Unmarshal(streamID, payload, &newEvent)
 	if err != nil {
 		return nil, err
 	}
 
-	mappedEvent := mapper.FromStorage(event)
+	// Convert from pointer to value
+	value := reflect.ValueOf(newEvent).Elem().Interface()
+	mappedEvent := mapper.FromStorage(value)
 
 	return mappedEvent, nil
 }

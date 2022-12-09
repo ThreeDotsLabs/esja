@@ -2,8 +2,9 @@ package transport
 
 import (
 	"fmt"
-	"github.com/ThreeDotsLabs/esja/stream"
 	"reflect"
+
+	"github.com/ThreeDotsLabs/esja/stream"
 )
 
 type SimpleSerializer[T any] struct {

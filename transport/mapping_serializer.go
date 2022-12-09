@@ -2,26 +2,28 @@ package transport
 
 import (
 	"fmt"
-	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
+	"reflect"
+
+	"github.com/ThreeDotsLabs/esja/stream"
 )
 
 type EventMapper[T any] interface {
-	SupportedEvent() aggregate.Event[T]
+	SupportedEvent() stream.Event[T]
 	StorageEvent() any
-	ToStorage(event aggregate.Event[T]) any
-	FromStorage(event any) aggregate.Event[T]
+	ToStorage(event stream.Event[T]) any
+	FromStorage(event any) stream.Event[T]
 }
 
 type MappingSerializer[T any] struct {
 	marshaler Marshaler
-	mappers   map[aggregate.EventName]EventMapper[T]
+	mappers   map[stream.EventName]EventMapper[T]
 }
 
 func NewMappingSerializer[T any](
 	marshaler Marshaler,
 	mappers []EventMapper[T],
 ) *MappingSerializer[T] {
-	mappersMap := map[aggregate.EventName]EventMapper[T]{}
+	mappersMap := map[stream.EventName]EventMapper[T]{}
 
 	for _, m := range mappers {
 		mappersMap[m.SupportedEvent().EventName()] = m
@@ -37,7 +39,7 @@ func (m *MappingSerializer[T]) RegisterMapper(mapper EventMapper[T]) {
 	m.mappers[mapper.SupportedEvent().EventName()] = mapper
 }
 
-func (m *MappingSerializer[T]) Serialize(aggregateID aggregate.ID, event aggregate.Event[T]) ([]byte, error) {
+func (m *MappingSerializer[T]) Serialize(streamID stream.ID, event stream.Event[T]) ([]byte, error) {
 	mapper, err := m.mapperForEventName(event.EventName())
 	if err != nil {
 		return nil, err
@@ -45,28 +47,31 @@ func (m *MappingSerializer[T]) Serialize(aggregateID aggregate.ID, event aggrega
 
 	mappedEvent := mapper.ToStorage(event)
 
-	return m.marshaler.Marshal(aggregateID, mappedEvent)
+	return m.marshaler.Marshal(streamID, mappedEvent)
 }
 
-func (m *MappingSerializer[T]) Deserialize(aggregateID aggregate.ID, name aggregate.EventName, payload []byte) (aggregate.Event[T], error) {
+func (m *MappingSerializer[T]) Deserialize(streamID stream.ID, name stream.EventName, payload []byte) (stream.Event[T], error) {
 	mapper, err := m.mapperForEventName(name)
 	if err != nil {
 		return nil, err
 	}
 
 	event := mapper.StorageEvent()
+	newEvent := reflect.New(reflect.TypeOf(event)).Interface()
 
-	err = m.marshaler.Unmarshal(aggregateID, payload, event)
+	err = m.marshaler.Unmarshal(streamID, payload, &newEvent)
 	if err != nil {
 		return nil, err
 	}
 
-	mappedEvent := mapper.FromStorage(event)
+	// Convert from pointer to value
+	value := reflect.ValueOf(newEvent).Elem().Interface()
+	mappedEvent := mapper.FromStorage(value)
 
 	return mappedEvent, nil
 }
 
-func (m *MappingSerializer[T]) mapperForEventName(name aggregate.EventName) (EventMapper[T], error) {
+func (m *MappingSerializer[T]) mapperForEventName(name stream.EventName) (EventMapper[T], error) {
 	for n, mapper := range m.mappers {
 		if name == n {
 			return mapper, nil

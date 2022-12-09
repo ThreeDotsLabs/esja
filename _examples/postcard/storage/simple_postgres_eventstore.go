@@ -6,10 +6,11 @@ import (
 	"encoding/hex"
 	"strings"
 
-	"github.com/ThreeDotsLabs/esja/example/aggregate/postcard"
-	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
-	"github.com/ThreeDotsLabs/esja/pkg/eventstore"
-	"github.com/ThreeDotsLabs/esja/pkg/transport"
+	"github.com/ThreeDotsLabs/esja/eventstore"
+	"github.com/ThreeDotsLabs/esja/stream"
+	"github.com/ThreeDotsLabs/esja/transport"
+
+	"postcard"
 )
 
 func NewDefaultSimplePostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[*postcard.Postcard], error) {
@@ -17,7 +18,7 @@ func NewDefaultSimplePostcardRepository(ctx context.Context, db *sql.DB) (events
 		ctx,
 		db,
 		eventstore.NewPostgresSQLConfig[*postcard.Postcard](
-			[]aggregate.Event[*postcard.Postcard]{
+			[]stream.Event[*postcard.Postcard]{
 				postcard.Created{},
 				postcard.Addressed{},
 				postcard.Written{},
@@ -35,7 +36,7 @@ func NewCustomSimplePostcardRepository(ctx context.Context, db *sql.DB) (eventst
 			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[*postcard.Postcard]("PostcardSimple"),
 			Serializer: transport.NewSimpleSerializer(
 				transport.JSONMarshaler{},
-				[]aggregate.Event[*postcard.Postcard]{
+				[]stream.Event[*postcard.Postcard]{
 					postcard.Created{},
 					postcard.Addressed{},
 					postcard.Written{},
@@ -55,7 +56,7 @@ func NewSimpleAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (ev
 			Serializer: transport.NewAESAnonymizingSerializer[*postcard.Postcard](
 				transport.NewSimpleSerializer[*postcard.Postcard](
 					transport.JSONMarshaler{},
-					[]aggregate.Event[*postcard.Postcard]{
+					[]stream.Event[*postcard.Postcard]{
 						postcard.Created{},
 						postcard.Addressed{},
 						postcard.Written{},
@@ -73,7 +74,7 @@ func NewSimpleSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventst
 		ctx,
 		db,
 		eventstore.NewSQLiteConfig[*postcard.Postcard](
-			[]aggregate.Event[*postcard.Postcard]{
+			[]stream.Event[*postcard.Postcard]{
 				postcard.Created{},
 				postcard.Addressed{},
 				postcard.Written{},
@@ -85,8 +86,8 @@ func NewSimpleSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventst
 
 type ConstantSecretProvider struct{}
 
-func (c ConstantSecretProvider) SecretForKey(aggregateID aggregate.ID) ([]byte, error) {
-	h, err := hex.DecodeString(strings.ReplaceAll(aggregateID.String(), "-", ""))
+func (c ConstantSecretProvider) SecretForKey(streamID stream.ID) ([]byte, error) {
+	h, err := hex.DecodeString(strings.ReplaceAll(streamID.String(), "-", ""))
 	if err != nil {
 		return nil, err
 	}

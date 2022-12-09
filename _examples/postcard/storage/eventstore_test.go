@@ -13,10 +13,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ThreeDotsLabs/esja/example/aggregate/postcard"
-	"github.com/ThreeDotsLabs/esja/example/storage"
-	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
-	"github.com/ThreeDotsLabs/esja/pkg/eventstore"
+	"github.com/ThreeDotsLabs/esja/eventstore"
+	"github.com/ThreeDotsLabs/esja/stream"
+
+	"postcard"
+	"postcard/storage"
 )
 
 var (
@@ -124,16 +125,16 @@ func TestPostcard_Repositories(t *testing.T) {
 			err = pc.Address(senderAddress, addresseeAddress)
 			require.NoError(t, err)
 
-			_, err = tc.repository.Load(ctx, aggregate.ID(id))
-			assert.ErrorIs(t, err, eventstore.ErrAggregateNotFound, "expected aggregate not found yet")
+			_, err = tc.repository.Load(ctx, stream.ID(id))
+			assert.ErrorIs(t, err, eventstore.ErrStreamNotFound, "expected stream not found yet")
 
 			err = tc.repository.Save(ctx, pc)
-			require.NoError(t, err, "should save the aggregate and it has some events already")
+			require.NoError(t, err, "should save the stream and it has some events already")
 
-			fromRepo2, err := tc.repository.Load(ctx, aggregate.ID(id))
-			assert.NoError(t, err, "should retrieve the aggregate, some events should have been saved")
+			fromRepo2, err := tc.repository.Load(ctx, stream.ID(id))
+			assert.NoError(t, err, "should retrieve the stream, some events should have been saved")
 
-			fromRepo2Duplicate, err := tc.repository.Load(ctx, aggregate.ID(id))
+			fromRepo2Duplicate, err := tc.repository.Load(ctx, stream.ID(id))
 			assert.NoError(t, err)
 
 			assert.Equal(t, pc.ID(), fromRepo2.ID())
@@ -155,9 +156,9 @@ func TestPostcard_Repositories(t *testing.T) {
 			require.NoError(t, err)
 
 			err = tc.repository.Save(ctx, fromRepo2Duplicate)
-			require.Error(t, err, "should fail to save the same aggregate version")
+			require.Error(t, err, "should fail to save the same stream version")
 
-			fromRepo3, err := tc.repository.Load(ctx, aggregate.ID(id))
+			fromRepo3, err := tc.repository.Load(ctx, stream.ID(id))
 			assert.NoError(t, err)
 
 			assert.Equal(t, id, fromRepo3.ID())

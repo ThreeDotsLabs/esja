@@ -1,11 +1,11 @@
-package aggregate
+package stream
 
 import "fmt"
 
 // EventName identifies the type of the event and the version of its schema, e.g. "FooCreated_v1".
 type EventName string
 
-type Event[A any] interface {
+type Event[T any] interface {
 	// EventName should identify the event and the version of its schema.
 	//
 	// Example implementation:
@@ -14,14 +14,14 @@ type Event[A any] interface {
 	// 	}
 	EventName() EventName
 
-	// Apply applies the event to the aggregate.
-	Apply(A) error
+	// ApplyTo applies the event to the stream.
+	ApplyTo(T) error
 }
 
-// VersionedEvent is an event with a corresponding aggregate version.
+// VersionedEvent is an event with a corresponding stream version.
 type VersionedEvent[A any] struct {
 	Event[A]
-	AggregateVersion int
+	StreamVersion int
 }
 
 // Events stores events.
@@ -37,7 +37,7 @@ func LoadEvents[A any](events []VersionedEvent[A]) (Events[A], error) {
 		return Events[A]{}, fmt.Errorf("no events to load")
 	}
 
-	version := events[len(events)-1].AggregateVersion
+	version := events[len(events)-1].StreamVersion
 
 	return Events[A]{
 		version: version,
@@ -49,8 +49,8 @@ func LoadEvents[A any](events []VersionedEvent[A]) (Events[A], error) {
 func (e *Events[A]) Record(event Event[A]) {
 	e.version += 1
 	e.queue = append(e.queue, VersionedEvent[A]{
-		Event:            event,
-		AggregateVersion: e.version,
+		Event:         event,
+		StreamVersion: e.version,
 	})
 }
 

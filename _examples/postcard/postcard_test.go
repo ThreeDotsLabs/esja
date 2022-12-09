@@ -7,8 +7,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ThreeDotsLabs/esja/example/aggregate/postcard"
-	"github.com/ThreeDotsLabs/esja/pkg/aggregate"
+	"github.com/ThreeDotsLabs/esja/stream"
+
+	"postcard"
 )
 
 var (
@@ -50,14 +51,14 @@ func TestPostcard_Lifecycle(t *testing.T) {
 	events := pc.PopEvents()
 	assert.Len(events, 3)
 
-	expectedEvents := []aggregate.VersionedEvent[*postcard.Postcard]{
-		{Event: postcard.Created{ID: id}, AggregateVersion: 1},
-		{Event: postcard.Addressed{Sender: senderAddress, Addressee: addresseeAddress}, AggregateVersion: 2},
-		{Event: postcard.Written{Content: "content"}, AggregateVersion: 3},
+	expectedEvents := []stream.VersionedEvent[*postcard.Postcard]{
+		{Event: postcard.Created{ID: id}, StreamVersion: 1},
+		{Event: postcard.Addressed{Sender: senderAddress, Addressee: addresseeAddress}, StreamVersion: 2},
+		{Event: postcard.Written{Content: "content"}, StreamVersion: 3},
 	}
 	assert.Equal(expectedEvents, events)
 
-	eq, err := aggregate.LoadEvents(events)
+	eq, err := stream.LoadEvents(events)
 	assert.NoError(err)
 
 	pcLoaded := postcard.Postcard{}
@@ -85,9 +86,9 @@ func TestPostcard_Lifecycle(t *testing.T) {
 	events = pcLoaded.PopEvents()
 	assert.Len(events, 2)
 
-	expectedEvents = []aggregate.VersionedEvent[*postcard.Postcard]{
-		{Event: postcard.Written{Content: "new content"}, AggregateVersion: 4},
-		{Event: postcard.Sent{}, AggregateVersion: 5},
+	expectedEvents = []stream.VersionedEvent[*postcard.Postcard]{
+		{Event: postcard.Written{Content: "new content"}, StreamVersion: 4},
+		{Event: postcard.Sent{}, StreamVersion: 5},
 	}
 
 	assert.Equal(expectedEvents, events)

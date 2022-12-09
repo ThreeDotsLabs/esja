@@ -9,19 +9,19 @@ const (
 	defaultEventsTableName = "events"
 	defaultSelectQuery     = `
 SELECT 
-	aggregate_id, 
-	aggregate_version, 
+	stream_id, 
+	stream_version, 
 	event_name, 
 	event_payload
 FROM %s
-WHERE aggregate_id = $1 AND aggregate_type = $2
-ORDER BY aggregate_version ASC;
+WHERE stream_id = $1 AND stream_type = $2
+ORDER BY stream_version ASC;
 `
 	defaultInsertQuery = `
 INSERT INTO %s (
-	aggregate_id, 
-	aggregate_version, 
-	aggregate_type, 
+	stream_id, 
+	stream_version, 
+	stream_type, 
 	event_name, 
 	event_payload
 )

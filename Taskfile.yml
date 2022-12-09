@@ -3,7 +3,13 @@ version: '3'
 tasks:
   test:
     cmds:
-      - bash script/wait-for-it.sh 127.0.0.1:5432 -t 10
+      - bash dev/wait-for-it.sh 127.0.0.1:5432 -t 10
+      - go test -count=1 ./...
+      - task: test-postcard
+
+  test-postcard:
+    dir: _examples/postcard
+    cmds:
       - go test -count=1 ./...
 
   fmt:

@@ -62,3 +62,8 @@ func (e *Events[A]) PopEvents() []VersionedEvent[A] {
 
 	return tmp
 }
+
+// HasEvents returns true if there are any queued events.
+func (e *Events[A]) HasEvents() bool {
+	return len(e.queue) > 0
+}

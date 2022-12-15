@@ -40,16 +40,18 @@ func (e *Events[A]) Record(event Event[A]) {
 	})
 }
 
-// LoadEvents loads a set Events with version set to the last event's version.
-func (e *Events[A]) LoadEvents(events []VersionedEvent[A]) error {
+// NewEvents creates a new instance of Events with set of Events loaded
+// and version set to the last event's version.
+func NewEvents[A any](events []VersionedEvent[A]) (*Events[A], error) {
 	if len(events) == 0 {
-		return fmt.Errorf("no events to load")
+		return nil, fmt.Errorf("no events to load")
 	}
 
+	e := new(Events[A])
 	e.version = events[len(events)-1].StreamVersion
 	e.queue = events
 
-	return nil
+	return e, nil
 }
 
 // PopEvents returns the events on the queue and clears it.

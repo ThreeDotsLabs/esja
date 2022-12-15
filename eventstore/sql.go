@@ -94,7 +94,7 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (T, error) {
 		streamVersion int
 		eventName     stream.EventName
 		eventPayload  []byte
-		events        []stream.VersionedEvent[T]
+		eventsSlice   []stream.VersionedEvent[T]
 	)
 	for results.Next() {
 		err = results.Scan(&streamID, &streamVersion, &eventName, &eventPayload)
@@ -111,20 +111,19 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (T, error) {
 			Event:         event,
 			StreamVersion: streamVersion,
 		}
-		events = append(events, versionedEvent)
+		eventsSlice = append(eventsSlice, versionedEvent)
 	}
 
-	if len(events) == 0 {
+	if len(eventsSlice) == 0 {
 		return t, ErrStreamNotFound
 	}
 
-	eq := &stream.Events[T]{}
-	err = eq.LoadEvents(events)
+	events, err := stream.NewEvents(eventsSlice)
 	if err != nil {
 		return t, err
 	}
 
-	return stream.New(eq)
+	return stream.New(events)
 }
 
 // Save saves the stream's queued events to the database.

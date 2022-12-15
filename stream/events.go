@@ -59,3 +59,17 @@ func (e *Events[A]) record(event Event[A]) {
 		StreamVersion: e.version,
 	})
 }
+
+// PopEvents returns the events on the queue and clears it.
+func (e *Events[A]) PopEvents() []VersionedEvent[A] {
+	var tmp = make([]VersionedEvent[A], len(e.queue))
+	copy(tmp, e.queue)
+	e.queue = []VersionedEvent[A]{}
+
+	return tmp
+}
+
+// HasEvents returns true if there are any queued events.
+func (e *Events[A]) HasEvents() bool {
+	return len(e.queue) > 0
+}

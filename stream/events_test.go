@@ -8,7 +8,22 @@ import (
 	"github.com/ThreeDotsLabs/esja/stream"
 )
 
-type Stream struct{}
+type Stream struct {
+	events *stream.Events[Stream]
+}
+
+func (s Stream) StreamID() stream.ID {
+	return "ID"
+}
+
+func (s Stream) Events() *stream.Events[Stream] {
+	return s.events
+}
+
+func (s Stream) WithEvents(events *stream.Events[Stream]) Stream {
+	s.events = events
+	return s
+}
 
 type Event struct {
 	ID int
@@ -18,7 +33,7 @@ func (e Event) EventName() stream.EventName {
 	return "Event"
 }
 
-func (e Event) ApplyTo(a *Stream) error {
+func (e Event) ApplyTo(_ *Stream) error {
 	return nil
 }
 
@@ -26,13 +41,18 @@ func TestNewEventsQueue(t *testing.T) {
 	event1 := Event{ID: 1}
 	event2 := Event{ID: 2}
 
-	es := stream.Events[Stream]{}
+	es := new(stream.Events[Stream])
+	s := Stream{
+		events: es,
+	}
 
 	events := es.PopEvents()
 	assert.Len(t, events, 0)
 
-	es.Record(event1)
-	es.Record(event2)
+	err := stream.Record(&s, event1)
+	assert.NoError(t, err)
+	err = stream.Record(&s, event2)
+	assert.NoError(t, err)
 
 	events = es.PopEvents()
 	assert.Len(t, events, 2)
@@ -47,8 +67,8 @@ func TestNewEventsQueue(t *testing.T) {
 	assert.Len(t, events, 0)
 
 	event3 := Event{ID: 3}
-
-	es.Record(event3)
+	err = stream.Record(&s, event3)
+	assert.NoError(t, err)
 
 	events = es.PopEvents()
 	assert.Len(t, events, 1)

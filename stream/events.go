@@ -40,6 +40,11 @@ func (e *Events[A]) PopEvents() []VersionedEvent[A] {
 	return tmp
 }
 
+// HasEvents returns true if there are any queued events.
+func (e *Events[A]) HasEvents() bool {
+	return len(e.queue) > 0
+}
+
 func newEvents[A any](events []VersionedEvent[A]) (*Events[A], error) {
 	if len(events) == 0 {
 		return nil, fmt.Errorf("no events to load")
@@ -58,18 +63,4 @@ func (e *Events[A]) record(event Event[A]) {
 		Event:         event,
 		StreamVersion: e.version,
 	})
-}
-
-// PopEvents returns the events on the queue and clears it.
-func (e *Events[A]) PopEvents() []VersionedEvent[A] {
-	var tmp = make([]VersionedEvent[A], len(e.queue))
-	copy(tmp, e.queue)
-	e.queue = []VersionedEvent[A]{}
-
-	return tmp
-}
-
-// HasEvents returns true if there are any queued events.
-func (e *Events[A]) HasEvents() bool {
-	return len(e.queue) > 0
 }

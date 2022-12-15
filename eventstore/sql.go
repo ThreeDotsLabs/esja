@@ -127,7 +127,7 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (T, error) {
 	return stream.New(eq)
 }
 
-// Save saves the streams' queued events to the database.
+// Save saves the stream's queued events to the database.
 func (s SQLStore[T]) Save(ctx context.Context, stm T) (err error) {
 	events := stm.Events().PopEvents()
 	if len(events) == 0 {

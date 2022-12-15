@@ -59,7 +59,7 @@ func TestPostcard_Lifecycle(t *testing.T) {
 	assert.Equal(expectedEvents, events)
 
 	eq := &stream.Events[postcard.Postcard]{}
-	err = eq.PushEvents(events)
+	err = eq.LoadEvents(events)
 	assert.NoError(err)
 
 	pcLoaded, err := stream.New(eq)

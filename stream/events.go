@@ -40,8 +40,8 @@ func (e *Events[A]) Record(event Event[A]) {
 	})
 }
 
-// PushEvents loads a set Events with version set to the last event's version.
-func (e *Events[A]) PushEvents(events []VersionedEvent[A]) error {
+// LoadEvents loads a set Events with version set to the last event's version.
+func (e *Events[A]) LoadEvents(events []VersionedEvent[A]) error {
 	if len(events) == 0 {
 		return fmt.Errorf("no events to load")
 	}

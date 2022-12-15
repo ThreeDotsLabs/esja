@@ -32,7 +32,7 @@ func (i *InMemoryStore[T]) Load(_ context.Context, id stream.ID) (T, error) {
 	}
 
 	eq := &stream.Events[T]{}
-	err := eq.PushEvents(events)
+	err := eq.LoadEvents(events)
 	if err != nil {
 		return t, err
 	}

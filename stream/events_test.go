@@ -38,8 +38,8 @@ func (e Event) ApplyTo(_ *Stream) error {
 }
 
 func TestNewEventsQueue(t *testing.T) {
-	event1 := Event{ID: 1}
-	event2 := Event{ID: 2}
+	var event1 stream.Event[Stream] = Event{ID: 1}
+	var event2 stream.Event[Stream] = Event{ID: 2}
 
 	es := new(stream.Events[Stream])
 	s := Stream{
@@ -71,7 +71,8 @@ func TestNewEventsQueue(t *testing.T) {
 	events = es.PopEvents()
 	assert.Len(t, events, 0)
 
-	event3 := Event{ID: 3}
+	var event3 stream.Event[Stream] = Event{ID: 3}
+
 	err = stream.Record(&s, event3)
 	assert.NoError(t, err)
 

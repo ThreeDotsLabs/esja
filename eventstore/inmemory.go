@@ -3,7 +3,6 @@ package eventstore
 import (
 	"context"
 	"errors"
-	"reflect"
 	"sync"
 
 	"github.com/ThreeDotsLabs/esja/stream"
@@ -25,39 +24,27 @@ func (i *InMemoryStore[T]) Load(_ context.Context, id stream.ID) (T, error) {
 	i.lock.RLock()
 	defer i.lock.RUnlock()
 
-	var target T
+	var t T
 
 	events, ok := i.events[id]
 	if !ok {
-		return target, ErrStreamNotFound
+		return t, ErrStreamNotFound
 	}
 
-	eq, err := stream.LoadEvents(events)
+	eq := &stream.Events[T]{}
+	err := eq.PushEvents(events)
 	if err != nil {
-		return target, err
+		return t, err
 	}
 
-	targetType := reflect.TypeOf(target)
-	if targetType.Kind() == reflect.Ptr {
-		targetType = targetType.Elem()
-	}
-
-	newTarget := reflect.New(targetType).Interface()
-	loadedStream := newTarget.(T)
-
-	err = loadedStream.FromEvents(eq)
-	if err != nil {
-		return target, err
-	}
-
-	return loadedStream, nil
+	return stream.New(eq)
 }
 
 func (i *InMemoryStore[T]) Save(_ context.Context, a T) error {
 	i.lock.Lock()
 	defer i.lock.Unlock()
 
-	events := a.PopEvents()
+	events := a.Events().PopEvents()
 	if len(events) == 0 {
 		return errors.New("no events to save")
 	}

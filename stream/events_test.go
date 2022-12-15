@@ -18,7 +18,7 @@ func (e Event) EventName() stream.EventName {
 	return "Event"
 }
 
-func (e Event) ApplyTo(a Stream) error {
+func (e Event) ApplyTo(a *Stream) error {
 	return nil
 }
 

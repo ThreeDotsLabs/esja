@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"reflect"
 
 	"github.com/ThreeDotsLabs/esja/stream"
 )
@@ -75,15 +74,15 @@ func (s SQLStore[T]) initializeSchema(ctx context.Context) error {
 
 // Load loads the stream from the database events.
 func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (T, error) {
-	var target T
+	var t T
 
 	query, args, err := s.config.SchemaAdapter.SelectQuery(id.String())
 	if err != nil {
-		return target, fmt.Errorf("error building select query: %w", err)
+		return t, fmt.Errorf("error building select query: %w", err)
 	}
 	results, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return target, fmt.Errorf("error retrieving rows for events: %w", err)
+		return t, fmt.Errorf("error retrieving rows for events: %w", err)
 	}
 
 	defer func() {
@@ -100,12 +99,12 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (T, error) {
 	for results.Next() {
 		err = results.Scan(&streamID, &streamVersion, &eventName, &eventPayload)
 		if err != nil {
-			return target, fmt.Errorf("error reading row result: %w", err)
+			return t, fmt.Errorf("error reading row result: %w", err)
 		}
 
 		event, err := s.config.Serializer.Deserialize(streamID, eventName, eventPayload)
 		if err != nil {
-			return target, fmt.Errorf("error deserializing event: %w", err)
+			return t, fmt.Errorf("error deserializing event: %w", err)
 		}
 
 		versionedEvent := stream.VersionedEvent[T]{
@@ -116,33 +115,21 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (T, error) {
 	}
 
 	if len(events) == 0 {
-		return target, ErrStreamNotFound
+		return t, ErrStreamNotFound
 	}
 
-	eq, err := stream.LoadEvents(events)
+	eq := &stream.Events[T]{}
+	err = eq.PushEvents(events)
 	if err != nil {
-		return target, err
+		return t, err
 	}
 
-	targetType := reflect.TypeOf(target)
-	if targetType.Kind() == reflect.Ptr {
-		targetType = targetType.Elem()
-	}
-
-	newTarget := reflect.New(targetType).Interface()
-	loadedStream := newTarget.(T)
-
-	err = loadedStream.FromEvents(eq)
-	if err != nil {
-		return target, err
-	}
-
-	return loadedStream, nil
+	return stream.New(eq)
 }
 
-// Save saves the streams's queued events to the database.
+// Save saves the streams' queued events to the database.
 func (s SQLStore[T]) Save(ctx context.Context, stm T) (err error) {
-	events := stm.PopEvents()
+	events := stm.Events().PopEvents()
 	if len(events) == 0 {
 		return errors.New("no events to save")
 	}

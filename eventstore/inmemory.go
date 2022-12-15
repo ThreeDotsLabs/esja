@@ -26,14 +26,9 @@ func (i *InMemoryStore[T]) Load(_ context.Context, id stream.ID) (T, error) {
 
 	var t T
 
-	eventsSlice, ok := i.events[id]
+	events, ok := i.events[id]
 	if !ok {
 		return t, ErrStreamNotFound
-	}
-
-	events, err := stream.NewEvents(eventsSlice)
-	if err != nil {
-		return t, err
 	}
 
 	return stream.New(events)

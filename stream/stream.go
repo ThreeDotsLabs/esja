@@ -54,16 +54,21 @@ func Record[T Stream[T]](stream *T, e Event[T]) error {
 	return nil
 }
 
-func New[T Stream[T]](eq *Events[T]) (T, error) {
-	events := eq.PopEvents()
-
+func New[T Stream[T]](eventsSlice []VersionedEvent[T]) (T, error) {
 	var t T
-	for _, e := range events {
+
+	events, err := newEvents(eventsSlice)
+	if err != nil {
+		return t, err
+	}
+
+	eventsSlice = events.PopEvents()
+	for _, e := range eventsSlice {
 		err := e.ApplyTo(&t)
 		if err != nil {
 			return t, err
 		}
 	}
 
-	return t.WithEvents(eq), nil
+	return t.WithEvents(events), nil
 }

@@ -94,7 +94,7 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (T, error) {
 		streamVersion int
 		eventName     stream.EventName
 		eventPayload  []byte
-		eventsSlice   []stream.VersionedEvent[T]
+		events        []stream.VersionedEvent[T]
 	)
 	for results.Next() {
 		err = results.Scan(&streamID, &streamVersion, &eventName, &eventPayload)
@@ -111,16 +111,11 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (T, error) {
 			Event:         event,
 			StreamVersion: streamVersion,
 		}
-		eventsSlice = append(eventsSlice, versionedEvent)
+		events = append(events, versionedEvent)
 	}
 
-	if len(eventsSlice) == 0 {
+	if len(events) == 0 {
 		return t, ErrStreamNotFound
-	}
-
-	events, err := stream.NewEvents(eventsSlice)
-	if err != nil {
-		return t, err
 	}
 
 	return stream.New(events)

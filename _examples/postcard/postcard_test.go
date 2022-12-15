@@ -48,18 +48,15 @@ func TestPostcard_Lifecycle(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal("content", pc.Content())
 
-	eventsSlice := pc.Events().PopEvents()
-	assert.Len(eventsSlice, 3)
+	events := pc.Events().PopEvents()
+	assert.Len(events, 3)
 
 	expectedEvents := []stream.VersionedEvent[postcard.Postcard]{
 		{Event: postcard.Created{ID: id}, StreamVersion: 1},
 		{Event: postcard.Addressed{Sender: senderAddress, Addressee: addresseeAddress}, StreamVersion: 2},
 		{Event: postcard.Written{Content: "content"}, StreamVersion: 3},
 	}
-	assert.Equal(expectedEvents, eventsSlice)
-
-	events, err := stream.NewEvents(eventsSlice)
-	assert.NoError(err)
+	assert.Equal(expectedEvents, events)
 
 	pcLoaded, err := stream.New(events)
 	assert.NoError(err)
@@ -69,11 +66,11 @@ func TestPostcard_Lifecycle(t *testing.T) {
 	assert.Equal("content", pcLoaded.Content())
 	assert.False(pcLoaded.Sent())
 
-	eventsSlice = pc.Events().PopEvents()
-	assert.Len(eventsSlice, 0)
+	events = pc.Events().PopEvents()
+	assert.Len(events, 0)
 
-	eventsSlice = pcLoaded.Events().PopEvents()
-	assert.Len(eventsSlice, 0)
+	events = pcLoaded.Events().PopEvents()
+	assert.Len(events, 0)
 
 	err = pcLoaded.Write("new content")
 	require.NoError(t, err)
@@ -82,13 +79,13 @@ func TestPostcard_Lifecycle(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(pcLoaded.Sent())
 
-	eventsSlice = pcLoaded.Events().PopEvents()
-	assert.Len(eventsSlice, 2)
+	events = pcLoaded.Events().PopEvents()
+	assert.Len(events, 2)
 
 	expectedEvents = []stream.VersionedEvent[postcard.Postcard]{
 		{Event: postcard.Written{Content: "new content"}, StreamVersion: 4},
 		{Event: postcard.Sent{}, StreamVersion: 5},
 	}
 
-	assert.Equal(expectedEvents, eventsSlice)
+	assert.Equal(expectedEvents, events)
 }

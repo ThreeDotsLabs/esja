@@ -28,14 +28,19 @@ func TestNewEventsQueue(t *testing.T) {
 
 	es := stream.Events[Stream]{}
 
+	assert.False(t, es.HasEvents())
+
 	events := es.PopEvents()
 	assert.Len(t, events, 0)
 
 	es.Record(event1)
 	es.Record(event2)
 
+	assert.True(t, es.HasEvents())
+
 	events = es.PopEvents()
 	assert.Len(t, events, 2)
+	assert.False(t, es.HasEvents())
 
 	assert.Equal(t, event1, events[0].Event)
 	assert.Equal(t, 1, events[0].StreamVersion)

@@ -31,6 +31,15 @@ type Events[A any] struct {
 	queue   []VersionedEvent[A]
 }
 
+// PopEvents returns the events on the queue and clears it.
+func (e *Events[A]) PopEvents() []VersionedEvent[A] {
+	var tmp = make([]VersionedEvent[A], len(e.queue))
+	copy(tmp, e.queue)
+	e.queue = []VersionedEvent[A]{}
+
+	return tmp
+}
+
 func newEvents[A any](events []VersionedEvent[A]) (*Events[A], error) {
 	if len(events) == 0 {
 		return nil, fmt.Errorf("no events to load")
@@ -43,20 +52,10 @@ func newEvents[A any](events []VersionedEvent[A]) (*Events[A], error) {
 	return e, nil
 }
 
-// Record puts a new Event on the queue with proper version.
-func (e *Events[A]) Record(event Event[A]) {
+func (e *Events[A]) record(event Event[A]) {
 	e.version += 1
 	e.queue = append(e.queue, VersionedEvent[A]{
 		Event:         event,
 		StreamVersion: e.version,
 	})
-}
-
-// PopEvents returns the events on the queue and clears it.
-func (e *Events[A]) PopEvents() []VersionedEvent[A] {
-	var tmp = make([]VersionedEvent[A], len(e.queue))
-	copy(tmp, e.queue)
-	e.queue = []VersionedEvent[A]{}
-
-	return tmp
 }

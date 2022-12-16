@@ -13,10 +13,8 @@ type Postcard struct {
 
 	sender    Address
 	addressee Address
-
-	content string
-
-	sent bool
+	content   string
+	sent      bool
 }
 
 type Address struct {

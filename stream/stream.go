@@ -57,7 +57,7 @@ func Record[T Stream[T]](stream *T, e Event[T]) error {
 	return nil
 }
 
-// New instantiates a new T with all Events applied to it.
+// New instantiates a new T with all events applied to it.
 // At the same time the stream's internal Events queue is initialised,
 // so it can record new upcoming events.
 func New[T Stream[T]](eventsSlice []VersionedEvent[T]) (*T, error) {

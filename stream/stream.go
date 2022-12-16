@@ -48,7 +48,7 @@ func Record[T Stream[T]](stream *T, e Event[T]) error {
 		return err
 	}
 
-	(*stream).Events().record(e)
+	(*stream).Events().Record(e)
 
 	return nil
 }

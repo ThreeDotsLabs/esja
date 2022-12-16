@@ -31,6 +31,15 @@ type Events[A any] struct {
 	queue   []VersionedEvent[A]
 }
 
+// Record puts a new Event on the queue with proper version.
+func (e *Events[A]) Record(event Event[A]) {
+	e.version += 1
+	e.queue = append(e.queue, VersionedEvent[A]{
+		Event:         event,
+		StreamVersion: e.version,
+	})
+}
+
 // PopEvents returns the events on the queue and clears it.
 func (e *Events[A]) PopEvents() []VersionedEvent[A] {
 	var tmp = make([]VersionedEvent[A], len(e.queue))
@@ -55,12 +64,4 @@ func newEvents[A any](events []VersionedEvent[A]) (*Events[A], error) {
 	e.queue = events
 
 	return e, nil
-}
-
-func (e *Events[A]) record(event Event[A]) {
-	e.version += 1
-	e.queue = append(e.queue, VersionedEvent[A]{
-		Event:         event,
-		StreamVersion: e.version,
-	})
 }

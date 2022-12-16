@@ -26,14 +26,13 @@ package stream
 //	    return u.events
 //	}
 //
-//	func (u User) WithEvents(events *stream.Events[User]) User {
-//	    u.events = events
-//		return u
+//	func (u User) NewFromEvents(events *stream.Events[User]) *User {
+//		return &User{events: events}
 //	}
 type Stream[T any] interface {
 	StreamID() ID
 	Events() *Events[T]
-	WithEvents(events *Events[T]) T
+	NewFromEvents(events *Events[T]) *T
 }
 
 // ID is the unique identifier of a stream.
@@ -63,12 +62,14 @@ func New[T Stream[T]](eventsSlice []VersionedEvent[T]) (T, error) {
 	}
 
 	eventsSlice = events.PopEvents()
+
+	target := t.NewFromEvents(events)
 	for _, e := range eventsSlice {
-		err := e.ApplyTo(&t)
+		err := e.ApplyTo(target)
 		if err != nil {
 			return t, err
 		}
 	}
 
-	return t.WithEvents(events), nil
+	return *target, nil
 }

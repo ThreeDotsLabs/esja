@@ -20,9 +20,8 @@ func (s Stream) Events() *stream.Events[Stream] {
 	return s.events
 }
 
-func (s Stream) WithEvents(events *stream.Events[Stream]) Stream {
-	s.events = events
-	return s
+func (s Stream) NewFromEvents(events *stream.Events[Stream]) *Stream {
+	return &Stream{events: events}
 }
 
 type Event struct {

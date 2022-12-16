@@ -49,9 +49,8 @@ func (p Postcard) Events() *stream.Events[Postcard] {
 	return p.events
 }
 
-func (p Postcard) WithEvents(events *stream.Events[Postcard]) Postcard {
-	p.events = events
-	return p
+func (p Postcard) NewFromEvents(events *stream.Events[Postcard]) *Postcard {
+	return &Postcard{events: events}
 }
 
 func (p *Postcard) ID() string {

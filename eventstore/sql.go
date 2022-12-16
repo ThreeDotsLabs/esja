@@ -73,16 +73,15 @@ func (s SQLStore[T]) initializeSchema(ctx context.Context) error {
 }
 
 // Load loads the stream from the database events.
-func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (T, error) {
-	var t T
-
+func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (*T, error) {
 	query, args, err := s.config.SchemaAdapter.SelectQuery(id.String())
 	if err != nil {
-		return t, fmt.Errorf("error building select query: %w", err)
+		return nil, fmt.Errorf("error building select query: %w", err)
 	}
+
 	results, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {
-		return t, fmt.Errorf("error retrieving rows for events: %w", err)
+		return nil, fmt.Errorf("error retrieving rows for events: %w", err)
 	}
 
 	defer func() {
@@ -99,12 +98,12 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (T, error) {
 	for results.Next() {
 		err = results.Scan(&streamID, &streamVersion, &eventName, &eventPayload)
 		if err != nil {
-			return t, fmt.Errorf("error reading row result: %w", err)
+			return nil, fmt.Errorf("error reading row result: %w", err)
 		}
 
 		event, err := s.config.Serializer.Deserialize(streamID, eventName, eventPayload)
 		if err != nil {
-			return t, fmt.Errorf("error deserializing event: %w", err)
+			return nil, fmt.Errorf("error deserializing event: %w", err)
 		}
 
 		versionedEvent := stream.VersionedEvent[T]{
@@ -115,7 +114,7 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (T, error) {
 	}
 
 	if len(events) == 0 {
-		return t, ErrStreamNotFound
+		return nil, ErrStreamNotFound
 	}
 
 	return stream.New(events)

@@ -20,15 +20,13 @@ func NewInMemoryStore[T stream.Stream[T]]() *InMemoryStore[T] {
 	}
 }
 
-func (i *InMemoryStore[T]) Load(_ context.Context, id stream.ID) (T, error) {
+func (i *InMemoryStore[T]) Load(_ context.Context, id stream.ID) (*T, error) {
 	i.lock.RLock()
 	defer i.lock.RUnlock()
 
-	var t T
-
 	events, ok := i.events[id]
 	if !ok {
-		return t, ErrStreamNotFound
+		return nil, ErrStreamNotFound
 	}
 
 	return stream.New(events)

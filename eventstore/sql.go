@@ -121,7 +121,13 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (*T, error) {
 }
 
 // Save saves the stream's queued events to the database.
-func (s SQLStore[T]) Save(ctx context.Context, stm T) (err error) {
+func (s SQLStore[T]) Save(ctx context.Context, t *T) (err error) {
+	if t == nil {
+		return errors.New("target to save must not be nil")
+	}
+
+	stm := *t
+
 	events := stm.Events().PopEvents()
 	if len(events) == 0 {
 		return errors.New("no events to save")

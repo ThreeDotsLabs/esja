@@ -32,17 +32,23 @@ func (i *InMemoryStore[T]) Load(_ context.Context, id stream.ID) (*T, error) {
 	return stream.New(events)
 }
 
-func (i *InMemoryStore[T]) Save(_ context.Context, a T) error {
+func (i *InMemoryStore[T]) Save(_ context.Context, t *T) error {
 	i.lock.Lock()
 	defer i.lock.Unlock()
 
-	events := a.Events().PopEvents()
+	if t == nil {
+		return errors.New("target to save must not be nil")
+	}
+
+	stm := *t
+
+	events := stm.Events().PopEvents()
 	if len(events) == 0 {
 		return errors.New("no events to save")
 	}
 
-	if priorEvents, ok := i.events[a.StreamID()]; !ok {
-		i.events[a.StreamID()] = events
+	if priorEvents, ok := i.events[stm.StreamID()]; !ok {
+		i.events[stm.StreamID()] = events
 	} else {
 		for _, event := range events {
 			if len(priorEvents) > 0 {
@@ -50,7 +56,7 @@ func (i *InMemoryStore[T]) Save(_ context.Context, a T) error {
 					return errors.New("stream version duplicate")
 				}
 			}
-			i.events[a.StreamID()] = append(i.events[a.StreamID()], event)
+			i.events[stm.StreamID()] = append(i.events[stm.StreamID()], event)
 		}
 	}
 

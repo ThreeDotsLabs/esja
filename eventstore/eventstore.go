@@ -18,5 +18,5 @@ var (
 // 2. Save would call `PopEvents()` and then save them under the stream's id from `StreamID()`.
 type EventStore[T stream.Stream[T]] interface {
 	Load(ctx context.Context, id stream.ID) (*T, error)
-	Save(ctx context.Context, stream T) error
+	Save(ctx context.Context, stream *T) error
 }

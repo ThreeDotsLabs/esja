@@ -15,7 +15,7 @@ type Event[T any] interface {
 	EventName() EventName
 
 	// ApplyTo applies the event to the stream.
-	ApplyTo(T) error
+	ApplyTo(*T) error
 }
 
 // VersionedEvent is an event with a corresponding stream version.
@@ -29,20 +29,6 @@ type VersionedEvent[A any] struct {
 type Events[A any] struct {
 	version int
 	queue   []VersionedEvent[A]
-}
-
-// LoadEvents creates a new Events with version set to the last event's version.
-func LoadEvents[A any](events []VersionedEvent[A]) (Events[A], error) {
-	if len(events) == 0 {
-		return Events[A]{}, fmt.Errorf("no events to load")
-	}
-
-	version := events[len(events)-1].StreamVersion
-
-	return Events[A]{
-		version: version,
-		queue:   events,
-	}, nil
 }
 
 // Record puts a new Event on the queue with proper version.
@@ -66,4 +52,16 @@ func (e *Events[A]) PopEvents() []VersionedEvent[A] {
 // HasEvents returns true if there are any queued events.
 func (e *Events[A]) HasEvents() bool {
 	return len(e.queue) > 0
+}
+
+func newEvents[A any](events []VersionedEvent[A]) (*Events[A], error) {
+	if len(events) == 0 {
+		return nil, fmt.Errorf("no events to load")
+	}
+
+	e := new(Events[A])
+	e.version = events[len(events)-1].StreamVersion
+	e.queue = events
+
+	return e, nil
 }

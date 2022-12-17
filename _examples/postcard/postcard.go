@@ -7,16 +7,14 @@ import (
 )
 
 type Postcard struct {
-	events stream.Events[*Postcard]
+	events *stream.Events[Postcard]
 
 	id string
 
 	sender    Address
 	addressee Address
-
-	content string
-
-	sent bool
+	content   string
+	sent      bool
 }
 
 type Address struct {
@@ -27,9 +25,11 @@ type Address struct {
 }
 
 func NewPostcard(id string) (*Postcard, error) {
-	p := &Postcard{}
+	p := &Postcard{
+		events: new(stream.Events[Postcard]),
+	}
 
-	err := stream.Record[*Postcard](p, &p.events, Created{
+	err := stream.Record[Postcard](p, Created{
 		ID: id,
 	})
 	if err != nil {
@@ -39,31 +39,30 @@ func NewPostcard(id string) (*Postcard, error) {
 	return p, nil
 }
 
-func (p *Postcard) PopEvents() []stream.VersionedEvent[*Postcard] {
-	return p.events.PopEvents()
+func (p Postcard) StreamID() stream.ID {
+	return stream.ID(p.id)
 }
 
-func (p *Postcard) FromEvents(events stream.Events[*Postcard]) error {
-	p.events = events
-	return stream.ApplyAll(p)
+func (p Postcard) Events() *stream.Events[Postcard] {
+	return p.events
+}
+
+func (p Postcard) NewFromEvents(events *stream.Events[Postcard]) *Postcard {
+	return &Postcard{events: events}
 }
 
 func (p *Postcard) ID() string {
 	return p.id
 }
 
-func (p *Postcard) StreamID() stream.ID {
-	return stream.ID(p.id)
-}
-
 func (p *Postcard) Write(content string) error {
-	return stream.Record[*Postcard](p, &p.events, Written{
+	return stream.Record[Postcard](p, Written{
 		Content: content,
 	})
 }
 
 func (p *Postcard) Address(sender Address, addressee Address) error {
-	return stream.Record[*Postcard](p, &p.events, Addressed{
+	return stream.Record[Postcard](p, Addressed{
 		Sender:    sender,
 		Addressee: addressee,
 	})
@@ -74,7 +73,7 @@ func (p *Postcard) Send() error {
 		return fmt.Errorf("postcard already sent")
 	}
 
-	return stream.Record[*Postcard](p, &p.events, Sent{})
+	return stream.Record[Postcard](p, Sent{})
 }
 
 func (p *Postcard) Sender() Address {

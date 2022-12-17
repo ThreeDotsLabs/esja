@@ -13,12 +13,12 @@ import (
 	"postcard"
 )
 
-func NewDefaultSimplePostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[*postcard.Postcard], error) {
-	return eventstore.NewSQLStore[*postcard.Postcard](
+func NewDefaultSimplePostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[postcard.Postcard], error) {
+	return eventstore.NewSQLStore[postcard.Postcard](
 		ctx,
 		db,
-		eventstore.NewPostgresSQLConfig[*postcard.Postcard](
-			[]stream.Event[*postcard.Postcard]{
+		eventstore.NewPostgresSQLConfig[postcard.Postcard](
+			[]stream.Event[postcard.Postcard]{
 				postcard.Created{},
 				postcard.Addressed{},
 				postcard.Written{},
@@ -28,15 +28,15 @@ func NewDefaultSimplePostcardRepository(ctx context.Context, db *sql.DB) (events
 	)
 }
 
-func NewCustomSimplePostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[*postcard.Postcard], error) {
-	return eventstore.NewSQLStore[*postcard.Postcard](
+func NewCustomSimplePostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[postcard.Postcard], error) {
+	return eventstore.NewSQLStore[postcard.Postcard](
 		ctx,
 		db,
-		eventstore.SQLConfig[*postcard.Postcard]{
-			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[*postcard.Postcard]("PostcardSimple"),
+		eventstore.SQLConfig[postcard.Postcard]{
+			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard]("PostcardSimple"),
 			Serializer: transport.NewSimpleSerializer(
 				transport.JSONMarshaler{},
-				[]stream.Event[*postcard.Postcard]{
+				[]stream.Event[postcard.Postcard]{
 					postcard.Created{},
 					postcard.Addressed{},
 					postcard.Written{},
@@ -47,16 +47,16 @@ func NewCustomSimplePostcardRepository(ctx context.Context, db *sql.DB) (eventst
 	)
 }
 
-func NewSimpleAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[*postcard.Postcard], error) {
-	return eventstore.NewSQLStore[*postcard.Postcard](
+func NewSimpleAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[postcard.Postcard], error) {
+	return eventstore.NewSQLStore[postcard.Postcard](
 		ctx,
 		db,
-		eventstore.SQLConfig[*postcard.Postcard]{
-			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[*postcard.Postcard]("PostcardSimpleAnonymizing"),
-			Serializer: transport.NewAESAnonymizingSerializer[*postcard.Postcard](
-				transport.NewSimpleSerializer[*postcard.Postcard](
+		eventstore.SQLConfig[postcard.Postcard]{
+			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard]("PostcardSimpleAnonymizing"),
+			Serializer: transport.NewAESAnonymizingSerializer[postcard.Postcard](
+				transport.NewSimpleSerializer[postcard.Postcard](
 					transport.JSONMarshaler{},
-					[]stream.Event[*postcard.Postcard]{
+					[]stream.Event[postcard.Postcard]{
 						postcard.Created{},
 						postcard.Addressed{},
 						postcard.Written{},
@@ -69,12 +69,12 @@ func NewSimpleAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (ev
 	)
 }
 
-func NewSimpleSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[*postcard.Postcard], error) {
-	return eventstore.NewSQLStore[*postcard.Postcard](
+func NewSimpleSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[postcard.Postcard], error) {
+	return eventstore.NewSQLStore[postcard.Postcard](
 		ctx,
 		db,
-		eventstore.NewSQLiteConfig[*postcard.Postcard](
-			[]stream.Event[*postcard.Postcard]{
+		eventstore.NewSQLiteConfig[postcard.Postcard](
+			[]stream.Event[postcard.Postcard]{
 				postcard.Created{},
 				postcard.Addressed{},
 				postcard.Written{},

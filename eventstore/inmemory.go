@@ -3,7 +3,6 @@ package eventstore
 import (
 	"context"
 	"errors"
-	"reflect"
 	"sync"
 
 	"github.com/ThreeDotsLabs/esja/stream"
@@ -21,49 +20,35 @@ func NewInMemoryStore[T stream.Stream[T]]() *InMemoryStore[T] {
 	}
 }
 
-func (i *InMemoryStore[T]) Load(_ context.Context, id stream.ID) (T, error) {
+func (i *InMemoryStore[T]) Load(_ context.Context, id stream.ID) (*T, error) {
 	i.lock.RLock()
 	defer i.lock.RUnlock()
 
-	var target T
-
 	events, ok := i.events[id]
 	if !ok {
-		return target, ErrStreamNotFound
+		return nil, ErrStreamNotFound
 	}
 
-	eq, err := stream.LoadEvents(events)
-	if err != nil {
-		return target, err
-	}
-
-	targetType := reflect.TypeOf(target)
-	if targetType.Kind() == reflect.Ptr {
-		targetType = targetType.Elem()
-	}
-
-	newTarget := reflect.New(targetType).Interface()
-	loadedStream := newTarget.(T)
-
-	err = loadedStream.FromEvents(eq)
-	if err != nil {
-		return target, err
-	}
-
-	return loadedStream, nil
+	return stream.New(events)
 }
 
-func (i *InMemoryStore[T]) Save(_ context.Context, a T) error {
+func (i *InMemoryStore[T]) Save(_ context.Context, t *T) error {
 	i.lock.Lock()
 	defer i.lock.Unlock()
 
-	events := a.PopEvents()
+	if t == nil {
+		return errors.New("target to save must not be nil")
+	}
+
+	stm := *t
+
+	events := stm.Events().PopEvents()
 	if len(events) == 0 {
 		return errors.New("no events to save")
 	}
 
-	if priorEvents, ok := i.events[a.StreamID()]; !ok {
-		i.events[a.StreamID()] = events
+	if priorEvents, ok := i.events[stm.StreamID()]; !ok {
+		i.events[stm.StreamID()] = events
 	} else {
 		for _, event := range events {
 			if len(priorEvents) > 0 {
@@ -71,7 +56,7 @@ func (i *InMemoryStore[T]) Save(_ context.Context, a T) error {
 					return errors.New("stream version duplicate")
 				}
 			}
-			i.events[a.StreamID()] = append(i.events[a.StreamID()], event)
+			i.events[stm.StreamID()] = append(i.events[stm.StreamID()], event)
 		}
 	}
 

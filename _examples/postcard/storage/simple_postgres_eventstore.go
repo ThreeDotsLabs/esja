@@ -84,6 +84,24 @@ func NewSimpleSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventst
 	)
 }
 
+func NewGOBSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[postcard.Postcard], error) {
+	return eventstore.NewSQLStore[postcard.Postcard](
+		ctx,
+		db,
+		eventstore.SQLConfig[postcard.Postcard]{
+			SchemaAdapter: eventstore.NewSQLiteSchemaAdapter[postcard.Postcard](""),
+			Serializer: transport.NewGOBSerializer[postcard.Postcard](
+				[]stream.Event[postcard.Postcard]{
+					postcard.Created{},
+					postcard.Addressed{},
+					postcard.Written{},
+					postcard.Sent{},
+				},
+			),
+		},
+	)
+}
+
 type ConstantSecretProvider struct{}
 
 func (c ConstantSecretProvider) SecretForKey(streamID stream.ID) ([]byte, error) {

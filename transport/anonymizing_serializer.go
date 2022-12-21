@@ -1,23 +1,23 @@
 package transport
 
 import (
-	pii2 "github.com/ThreeDotsLabs/esja/pii"
 	"github.com/ThreeDotsLabs/esja/stream"
+	"github.com/ThreeDotsLabs/pii"
 )
 
 type AESAnonymizingSerializer[T any] struct {
 	serializer EventSerializer[T]
-	anonymizer pii2.StructAnonymizer[stream.ID, stream.Event[T]]
+	anonymizer pii.StructAnonymizer[stream.ID, stream.Event[T]]
 }
 
 func NewAESAnonymizingSerializer[T any](
 	serializer EventSerializer[T],
-	secretProvider pii2.SecretProvider[stream.ID],
+	secretProvider pii.SecretProvider[stream.ID],
 ) *AESAnonymizingSerializer[T] {
 	return &AESAnonymizingSerializer[T]{
 		serializer: serializer,
-		anonymizer: pii2.NewStructAnonymizer[stream.ID, stream.Event[T]](
-			pii2.NewAESAnonymizer[stream.ID](secretProvider),
+		anonymizer: pii.NewStructAnonymizer[stream.ID, stream.Event[T]](
+			pii.NewAESAnonymizer[stream.ID](secretProvider),
 		),
 	}
 }

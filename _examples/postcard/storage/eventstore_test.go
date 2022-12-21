@@ -128,7 +128,7 @@ func TestPostcard_Repositories(t *testing.T) {
 			_, err = tc.repository.Load(ctx, stream.ID(id))
 			assert.ErrorIs(t, err, eventstore.ErrStreamNotFound, "expected stream not found yet")
 
-			err = tc.repository.Save(ctx, *pc)
+			err = tc.repository.Save(ctx, pc)
 			require.NoError(t, err, "should save the stream and it has some events already")
 
 			fromRepo2, err := tc.repository.Load(ctx, stream.ID(id))

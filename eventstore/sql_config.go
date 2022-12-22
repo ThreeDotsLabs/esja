@@ -9,25 +9,28 @@ import (
 
 type SQLConfig[T any] struct {
 	SchemaAdapter schemaAdapter[T]
-	Serializer    transport.EventSerializer[T]
+	Mapper        transport.Mapper[T]
+	Marshaler     transport.Marshaler
 }
 
 func (c SQLConfig[T]) validate() error {
 	if c.SchemaAdapter == nil {
 		return fmt.Errorf("schema adapter is nil")
 	}
-	if c.Serializer == nil {
-		return fmt.Errorf("serializer is nil")
+	if c.Mapper == nil {
+		return fmt.Errorf("mapper is nil")
+	}
+	if c.Marshaler == nil {
+		return fmt.Errorf("marshaler is nil")
 	}
 	return nil
 }
 
-func NewPostgresSQLConfig[T any](
-	supportedEvents []stream.Event[T],
-) SQLConfig[T] {
+func NewPostgresSQLConfig[T any]() SQLConfig[T] {
 	return SQLConfig[T]{
 		SchemaAdapter: NewPostgresSchemaAdapter[T](""),
-		Serializer:    transport.NewSimpleSerializer(transport.JSONMarshaler{}, supportedEvents),
+		Mapper:        transport.NewNoOpMapper[T](),
+		Marshaler:     transport.JSONMarshaler{},
 	}
 }
 
@@ -36,7 +39,8 @@ func NewMappingPostgresSQLConfig[T any](
 ) SQLConfig[T] {
 	return SQLConfig[T]{
 		SchemaAdapter: NewPostgresSchemaAdapter[T](""),
-		Serializer:    transport.NewMappingSerializer[T](transport.JSONMarshaler{}, eventMappers),
+		Mapper:        transport.NewDefaultMapper[T](eventMappers),
+		Marshaler:     transport.JSONMarshaler{},
 	}
 }
 
@@ -45,7 +49,8 @@ func NewSQLiteConfig[T any](
 ) SQLConfig[T] {
 	return SQLConfig[T]{
 		SchemaAdapter: NewSQLiteSchemaAdapter[T](""),
-		Serializer:    transport.NewSimpleSerializer(transport.JSONMarshaler{}, supportedEvents),
+		Mapper:        transport.NewNoOpMapper[T](),
+		Marshaler:     transport.JSONMarshaler{},
 	}
 }
 
@@ -54,6 +59,7 @@ func NewMappingSQLiteConfig[T any](
 ) SQLConfig[T] {
 	return SQLConfig[T]{
 		SchemaAdapter: NewSQLiteSchemaAdapter[T](""),
-		Serializer:    transport.NewMappingSerializer[T](transport.JSONMarshaler{}, eventMappers),
+		Mapper:        transport.NewDefaultMapper[T](eventMappers),
+		Marshaler:     transport.JSONMarshaler{},
 	}
 }

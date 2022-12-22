@@ -90,7 +90,8 @@ func NewGOBSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventstore
 		db,
 		eventstore.SQLConfig[postcard.Postcard]{
 			SchemaAdapter: eventstore.NewSQLiteSchemaAdapter[postcard.Postcard](""),
-			Serializer: transport.NewGOBSerializer[postcard.Postcard](
+			Serializer: transport.NewSimpleSerializer[postcard.Postcard](
+				transport.GOBMarshaler{},
 				[]stream.Event[postcard.Postcard]{
 					postcard.Created{},
 					postcard.Addressed{},

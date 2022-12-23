@@ -7,24 +7,32 @@ import (
 	"github.com/ThreeDotsLabs/esja/stream"
 )
 
+// NoOpMapper implements an interface of transport.Mapper
+// The mapper will use provided original stream events as transport models.
 type NoOpMapper[T any] struct {
 	supported map[stream.EventName]stream.Event[T]
 }
 
+// NewNoOpMapper returns a new instance of NoOpMapper.
 func NewNoOpMapper[T any](
 	supportedEvents []stream.Event[T],
-) NoOpMapper[T] {
+) *NoOpMapper[T] {
 	supported := make(map[stream.EventName]stream.Event[T])
 	for _, e := range supportedEvents {
 		supported[e.EventName()] = e
 	}
 
-	return NoOpMapper[T]{
+	return &NoOpMapper[T]{
 		supported: supported,
 	}
 }
 
-func (m NoOpMapper[T]) New(name stream.EventName) (any, error) {
+// RegisterEvent registers new supported stream event.
+func (m *NoOpMapper[T]) RegisterEvent(e stream.Event[T]) {
+	m.supported[e.EventName()] = e
+}
+
+func (m *NoOpMapper[T]) New(name stream.EventName) (any, error) {
 	e, ok := m.supported[name]
 	if !ok {
 		return nil, fmt.Errorf("unsupported event of name '%s'", name)
@@ -33,14 +41,14 @@ func (m NoOpMapper[T]) New(name stream.EventName) (any, error) {
 	return newInstance(e), nil
 }
 
-func (NoOpMapper[T]) ToStorage(
+func (m *NoOpMapper[T]) ToStorage(
 	_ stream.ID,
 	event stream.Event[T],
 ) (any, error) {
 	return event, nil
 }
 
-func (NoOpMapper[T]) FromStorage(
+func (m *NoOpMapper[T]) FromStorage(
 	_ stream.ID,
 	payload any,
 ) (stream.Event[T], error) {

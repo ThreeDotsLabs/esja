@@ -5,11 +5,15 @@ import (
 	"github.com/ThreeDotsLabs/pii"
 )
 
+// AESAnonymizer is a wrapper to any transport.Mapper instance.
+// AESAnonymizer will anonymize transport model properties
+// if those were tagged with `anonymize:true` tag.
 type AESAnonymizer[T any] struct {
 	mapper     Mapper[T]
 	anonymizer pii.StructAnonymizer[stream.ID, any]
 }
 
+// NewAESAnonymizer returns a new instance of AESAnonymizer.
 func NewAESAnonymizer[T any](
 	mapper Mapper[T],
 	secretProvider pii.SecretProvider[stream.ID],

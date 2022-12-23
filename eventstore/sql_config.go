@@ -26,20 +26,22 @@ func (c SQLConfig[T]) validate() error {
 	return nil
 }
 
-func NewPostgresSQLConfig[T any]() SQLConfig[T] {
+func NewPostgresSQLConfig[T any](
+	supportedEvents []stream.Event[T],
+) SQLConfig[T] {
 	return SQLConfig[T]{
 		SchemaAdapter: NewPostgresSchemaAdapter[T](""),
-		Mapper:        transport.NewNoOpMapper[T](),
+		Mapper:        transport.NewNoOpMapper[T](supportedEvents),
 		Marshaler:     transport.JSONMarshaler{},
 	}
 }
 
 func NewMappingPostgresSQLConfig[T any](
-	eventMappers []transport.EventMapper[T],
+	supportedEvents []transport.Event[T],
 ) SQLConfig[T] {
 	return SQLConfig[T]{
 		SchemaAdapter: NewPostgresSchemaAdapter[T](""),
-		Mapper:        transport.NewDefaultMapper[T](eventMappers),
+		Mapper:        transport.NewDefaultMapper[T](supportedEvents),
 		Marshaler:     transport.JSONMarshaler{},
 	}
 }
@@ -49,17 +51,17 @@ func NewSQLiteConfig[T any](
 ) SQLConfig[T] {
 	return SQLConfig[T]{
 		SchemaAdapter: NewSQLiteSchemaAdapter[T](""),
-		Mapper:        transport.NewNoOpMapper[T](),
+		Mapper:        transport.NewNoOpMapper[T](supportedEvents),
 		Marshaler:     transport.JSONMarshaler{},
 	}
 }
 
 func NewMappingSQLiteConfig[T any](
-	eventMappers []transport.EventMapper[T],
+	supportedEvents []transport.Event[T],
 ) SQLConfig[T] {
 	return SQLConfig[T]{
 		SchemaAdapter: NewSQLiteSchemaAdapter[T](""),
-		Mapper:        transport.NewDefaultMapper[T](eventMappers),
+		Mapper:        transport.NewDefaultMapper[T](supportedEvents),
 		Marshaler:     transport.JSONMarshaler{},
 	}
 }

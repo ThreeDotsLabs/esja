@@ -2,69 +2,79 @@ package transport
 
 import (
 	"fmt"
+	"reflect"
 
 	"github.com/ThreeDotsLabs/esja/stream"
 )
 
-type EventMapper[T any] interface {
+type Event[T any] interface {
 	SupportedEvent() stream.Event[T]
-	ToStorage(event stream.Event[T]) any
-	FromStorage(event any) stream.Event[T]
+	FromEvent(event stream.Event[T]) Event[T]
+	ToEvent() stream.Event[T]
 }
 
 type DefaultMapper[T any] struct {
-	mappers map[stream.EventName]EventMapper[T]
+	supported map[stream.EventName]Event[T]
 }
 
 func NewDefaultMapper[T any](
-	mappers []EventMapper[T],
-) *DefaultMapper[T] {
-	mappersMap := map[stream.EventName]EventMapper[T]{}
-
-	for _, m := range mappers {
-		mappersMap[m.SupportedEvent().EventName()] = m
+	supportedEvents []Event[T],
+) DefaultMapper[T] {
+	supported := map[stream.EventName]Event[T]{}
+	for _, e := range supportedEvents {
+		supported[e.SupportedEvent().EventName()] = e
 	}
 
-	return &DefaultMapper[T]{
-		mappers: mappersMap,
+	return DefaultMapper[T]{
+		supported: supported,
 	}
 }
 
-func (m *DefaultMapper[T]) RegisterEvent(mapper EventMapper[T]) {
-	m.mappers[mapper.SupportedEvent().EventName()] = mapper
+func (m DefaultMapper[T]) RegisterEvent(e Event[T]) {
+	m.supported[e.SupportedEvent().EventName()] = e
 }
 
-func (m *DefaultMapper[T]) FromStorage(
-	_ stream.ID,
-	name stream.EventName,
-	i interface{},
-) (stream.Event[T], error) {
-	mapper, err := m.mapperForEventName(name)
+func (m DefaultMapper[T]) New(name stream.EventName) (any, error) {
+	e, err := m.eventForEventName(name)
 	if err != nil {
 		return nil, err
 	}
 
-	return mapper.FromStorage(i), nil
+	return newInstance(e), nil
 }
 
-func (m *DefaultMapper[T]) ToStorage(
+func (m DefaultMapper[T]) ToStorage(
 	_ stream.ID,
 	event stream.Event[T],
-) (interface{}, error) {
-	mapper, err := m.mapperForEventName(event.EventName())
+) (any, error) {
+	e, err := m.eventForEventName(event.EventName())
 	if err != nil {
 		return nil, err
 	}
 
-	return mapper.ToStorage(event), nil
+	newEvent := reflect.New(reflect.TypeOf(e)).Interface().(Event[T])
+	newEvent = newEvent.FromEvent(event)
+
+	return newEvent, nil
 }
 
-func (m *DefaultMapper[T]) mapperForEventName(name stream.EventName) (EventMapper[T], error) {
-	for n, mapper := range m.mappers {
-		if name == n {
-			return mapper, nil
-		}
+func (m DefaultMapper[T]) FromStorage(
+	_ stream.ID,
+	i any,
+) (stream.Event[T], error) {
+	e, ok := i.(Event[T])
+	if !ok {
+		return nil, fmt.Errorf("payload does not implement the Event[T] interface")
 	}
 
-	return nil, fmt.Errorf("no mapper for event %s", name)
+	return e.ToEvent(), nil
+}
+
+func (m DefaultMapper[T]) eventForEventName(name stream.EventName) (Event[T], error) {
+	e, ok := m.supported[name]
+	if !ok {
+		return nil, fmt.Errorf("unsupported event of name '%s'", name)
+	}
+
+	return e, nil
 }

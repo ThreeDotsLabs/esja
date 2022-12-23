@@ -24,15 +24,14 @@ func NewAESAnonymizer[T any](
 
 func (s *AESAnonymizer[T]) FromStorage(
 	streamID stream.ID,
-	name stream.EventName,
-	payload interface{},
+	payload any,
 ) (stream.Event[T], error) {
 	payload, err := s.anonymizer.Deanonymize(streamID, payload)
 	if err != nil {
 		return nil, err
 	}
 
-	event, err := s.mapper.FromStorage(streamID, name, payload)
+	event, err := s.mapper.FromStorage(streamID, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -43,13 +42,13 @@ func (s *AESAnonymizer[T]) FromStorage(
 func (s *AESAnonymizer[T]) ToStorage(
 	streamID stream.ID,
 	event stream.Event[T],
-) (interface{}, error) {
+) (any, error) {
 	e, err := s.mapper.ToStorage(streamID, event)
 	if err != nil {
 		return nil, err
 	}
 
-	payload, err := s.anonymizer.Anonymize(streamID, e)
+	payload, err := s.anonymizer.Anonymize(streamID, &e)
 	if err != nil {
 		return nil, err
 	}

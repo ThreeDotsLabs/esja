@@ -101,18 +101,25 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (*T, error) {
 			return nil, fmt.Errorf("error reading row result: %w", err)
 		}
 
-		s.config.Marshaler.Unmarshal(streamID, eventPayload)
+		event, err := s.config.Mapper.New(eventName)
+		if err != nil {
+			return nil, fmt.Errorf("error creating new event: %w", err)
+		}
 
-		event, err := s.config.Mapper.FromStorage(streamID, eventName, eventPayload)
+		err = s.config.Marshaler.Unmarshal(streamID, eventPayload, event)
+		if err != nil {
+			return nil, fmt.Errorf("error unmarshaling event payload: %w", err)
+		}
+
+		mappedEvent, err := s.config.Mapper.FromStorage(streamID, event)
 		if err != nil {
 			return nil, fmt.Errorf("error deserializing event: %w", err)
 		}
 
-		versionedEvent := stream.VersionedEvent[T]{
-			Event:         event,
+		events = append(events, stream.VersionedEvent[T]{
+			Event:         mappedEvent,
 			StreamVersion: streamVersion,
-		}
-		events = append(events, versionedEvent)
+		})
 	}
 
 	if len(events) == 0 {
@@ -137,9 +144,14 @@ func (s SQLStore[T]) Save(ctx context.Context, t *T) (err error) {
 
 	serializedEvents := make([]storageEvent[T], len(events))
 	for i, event := range events {
-		payload, err := s.config.Mapper.From(stm.StreamID(), event.Event)
+		mapped, err := s.config.Mapper.ToStorage(stm.StreamID(), event.Event)
 		if err != nil {
 			return fmt.Errorf("error serializing event: %w", err)
+		}
+
+		payload, err := s.config.Marshaler.Marshal(stm.StreamID(), mapped)
+		if err != nil {
+			return fmt.Errorf("error marshaling event payload: %w", err)
 		}
 
 		serializedEvents[i] = storageEvent[T]{

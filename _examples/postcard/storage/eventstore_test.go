@@ -12,12 +12,13 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"postcard/storage"
 
 	"github.com/ThreeDotsLabs/esja/eventstore"
 	"github.com/ThreeDotsLabs/esja/stream"
+	"github.com/ThreeDotsLabs/esja/transport"
 
 	"postcard"
-	"postcard/storage"
 )
 
 var (
@@ -34,7 +35,7 @@ var (
 )
 
 func TestPostcard_Repositories(t *testing.T) {
-	postgresDB := testPostgresDB(t)
+	//postgresDB := testPostgresDB(t)
 	sqliteDB := testSQLiteDB(t)
 
 	testCases := []struct {
@@ -46,69 +47,114 @@ func TestPostcard_Repositories(t *testing.T) {
 			repository: eventstore.NewInMemoryStore[postcard.Postcard](),
 		},
 		{
-			name: "postgres_simple",
-			repository: func() eventstore.EventStore[postcard.Postcard] {
-				repo, err := storage.NewDefaultSimplePostcardRepository(context.Background(), postgresDB)
-				require.NoError(t, err)
-				return repo
-			}(),
-		},
-		{
-			name: "postgres_simple_custom",
-			repository: func() eventstore.EventStore[postcard.Postcard] {
-				repo, err := storage.NewCustomSimplePostcardRepository(context.Background(), postgresDB)
-				require.NoError(t, err)
-				return repo
-			}(),
-		},
-		{
-			name: "postgres_simple_anonymized",
-			repository: func() eventstore.EventStore[postcard.Postcard] {
-				repo, err := storage.NewSimpleAnonymizingPostcardRepository(context.Background(), postgresDB)
-				require.NoError(t, err)
-				return repo
-			}(),
-		},
-		{
-			name: "postgres_mapping",
-			repository: func() eventstore.EventStore[postcard.Postcard] {
-				repo, err := storage.NewDefaultMappingPostgresRepository(context.Background(), postgresDB)
-				require.NoError(t, err)
-				return repo
-			}(),
-		},
-		{
-			name: "postgres_mapping_custom",
-			repository: func() eventstore.EventStore[postcard.Postcard] {
-				repo, err := storage.NewCustomMappingPostcardRepository(context.Background(), postgresDB)
-				require.NoError(t, err)
-				return repo
-			}(),
-		},
-		{
-			name: "postgres_mapping_anonymized",
-			repository: func() eventstore.EventStore[postcard.Postcard] {
-				repo, err := storage.NewMappingAnonymizingPostcardRepository(context.Background(), postgresDB)
-				require.NoError(t, err)
-				return repo
-			}(),
-		},
-		{
 			name: "sqlite_simple",
 			repository: func() eventstore.EventStore[postcard.Postcard] {
-				repo, err := storage.NewSimpleSQLitePostcardRepository(context.Background(), sqliteDB)
+				repo, err := eventstore.NewSQLStore[postcard.Postcard](
+					context.Background(),
+					sqliteDB,
+					eventstore.SQLConfig[postcard.Postcard]{
+						SchemaAdapter: eventstore.NewSQLiteSchemaAdapter[postcard.Postcard](""),
+						Mapper: transport.NewNoOpMapper[postcard.Postcard](
+							[]stream.Event[postcard.Postcard]{
+								postcard.Created{},
+								postcard.Addressed{},
+								postcard.Written{},
+								postcard.Sent{},
+							},
+						),
+						Marshaler: transport.JSONMarshaler{},
+					},
+				)
 				require.NoError(t, err)
 				return repo
 			}(),
 		},
 		{
-			name: "sqlite_mapping",
+			name: "mapped_sqlite_simple",
 			repository: func() eventstore.EventStore[postcard.Postcard] {
-				repo, err := storage.NewMappingSQLitePostcardRepository(context.Background(), sqliteDB)
+				repo, err := eventstore.NewSQLStore[postcard.Postcard](
+					context.Background(),
+					sqliteDB,
+					eventstore.SQLConfig[postcard.Postcard]{
+						SchemaAdapter: eventstore.NewSQLiteSchemaAdapter[postcard.Postcard](""),
+						Mapper: transport.NewDefaultMapper[postcard.Postcard](
+							[]transport.Event[postcard.Postcard]{
+								storage.Created{},
+								storage.Addressed{},
+								storage.Written{},
+								storage.Sent{},
+							}),
+						Marshaler: transport.JSONMarshaler{},
+					},
+				)
 				require.NoError(t, err)
 				return repo
 			}(),
 		},
+		//{
+		//	name: "postgres_simple",
+		//	repository: func() eventstore.EventStore[postcard.Postcard] {
+		//		repo, err := storage.NewDefaultSimplePostcardRepository(context.Background(), postgresDB)
+		//		require.NoError(t, err)
+		//		return repo
+		//	}(),
+		//},
+		//{
+		//	name: "postgres_simple_custom",
+		//	repository: func() eventstore.EventStore[postcard.Postcard] {
+		//		repo, err := storage.NewCustomSimplePostcardRepository(context.Background(), postgresDB)
+		//		require.NoError(t, err)
+		//		return repo
+		//	}(),
+		//},
+		//{
+		//	name: "postgres_simple_anonymized",
+		//	repository: func() eventstore.EventStore[postcard.Postcard] {
+		//		repo, err := storage.NewSimpleAnonymizingPostcardRepository(context.Background(), postgresDB)
+		//		require.NoError(t, err)
+		//		return repo
+		//	}(),
+		//},
+		//{
+		//	name: "postgres_mapping",
+		//	repository: func() eventstore.EventStore[postcard.Postcard] {
+		//		repo, err := storage.NewDefaultMappingPostgresRepository(context.Background(), postgresDB)
+		//		require.NoError(t, err)
+		//		return repo
+		//	}(),
+		//},
+		//{
+		//	name: "postgres_mapping_custom",
+		//	repository: func() eventstore.EventStore[postcard.Postcard] {
+		//		repo, err := storage.NewCustomMappingPostcardRepository(context.Background(), postgresDB)
+		//		require.NoError(t, err)
+		//		return repo
+		//	}(),
+		//},
+		//{
+		//	name: "postgres_mapping_anonymized",
+		//	repository: func() eventstore.EventStore[postcard.Postcard] {
+		//		repo, err := storage.NewMappingAnonymizingPostcardRepository(context.Background(), postgresDB)
+		//		require.NoError(t, err)
+		//		return repo
+		//	}(),
+		//},
+		//{
+		//	name: "sqlite_simple",
+		//	repository: func() eventstore.EventStore[postcard.Postcard] {
+		//		repo, err := storage.NewSimpleSQLitePostcardRepository(context.Background(), sqliteDB)
+		//		require.NoError(t, err)
+		//		return repo
+		//	}(),
+		//},
+		//{
+		//	name: "sqlite_mapping",
+		//	repository: func() eventstore.EventStore[postcard.Postcard] {
+		//		repo, err := storage.NewMappingSQLitePostcardRepository(context.Background(), sqliteDB)
+		//		require.NoError(t, err)
+		//		return repo
+		//	}(),
+		//},
 	}
 
 	ctx := context.Background()

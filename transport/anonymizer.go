@@ -56,7 +56,7 @@ func (a *AESAnonymizer[T]) ToStorage(
 		return nil, err
 	}
 
-	payload, err := a.anonymizer.Anonymize(streamID, &e)
+	payload, err := a.anonymizer.Anonymize(streamID, e)
 	if err != nil {
 		return nil, err
 	}

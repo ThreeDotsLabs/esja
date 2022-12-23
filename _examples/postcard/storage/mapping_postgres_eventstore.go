@@ -1,82 +1,88 @@
 package storage
 
 import (
+	"context"
+	"database/sql"
+
 	"postcard"
 
+	"github.com/ThreeDotsLabs/esja/eventstore"
 	"github.com/ThreeDotsLabs/esja/stream"
 	"github.com/ThreeDotsLabs/esja/transport"
 )
 
-//func NewDefaultMappingPostgresRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[postcard.Postcard], error) {
-//	return eventstore.NewSQLStore[postcard.Postcard](
-//		ctx,
-//		db,
-//		eventstore.NewMappingPostgresSQLConfig[postcard.Postcard](
-//			[]transport.EventMapper[postcard.Postcard]{
-//				CreatedMapper{},
-//				AddressedMapper{},
-//				WrittenMapper{},
-//				SentMapper{},
-//			},
-//		),
-//	)
-//}
-//
-//func NewCustomMappingPostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[postcard.Postcard], error) {
-//	return eventstore.NewSQLStore[postcard.Postcard](
-//		ctx,
-//		db,
-//		eventstore.SQLConfig[postcard.Postcard]{
-//			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard]("PostcardMapping"),
-//			Serializer: transport.NewMappingSerializer(
-//				transport.JSONMarshaler{},
-//				[]transport.EventMapper[postcard.Postcard]{
-//					CreatedMapper{},
-//					AddressedMapper{},
-//					WrittenMapper{},
-//					SentMapper{},
-//				},
-//			),
-//		},
-//	)
-//}
-//
-//func NewMappingAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[postcard.Postcard], error) {
-//	return eventstore.NewSQLStore[postcard.Postcard](
-//		ctx,
-//		db,
-//		eventstore.SQLConfig[postcard.Postcard]{
-//			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard]("PostcardMappingAnonymizing"),
-//			Serializer: transport.NewAESAnonymizingSerializer[postcard.Postcard](
-//				transport.NewMappingSerializer[postcard.Postcard](
-//					transport.JSONMarshaler{},
-//					[]transport.EventMapper[postcard.Postcard]{
-//						CreatedMapper{},
-//						AddressedMapper{},
-//						WrittenMapper{},
-//						SentMapper{},
-//					},
-//				),
-//				ConstantSecretProvider{},
-//			),
-//		},
-//	)
-//}
-//
-//func NewMappingSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[postcard.Postcard], error) {
-//	return eventstore.NewSQLStore[postcard.Postcard](
-//		ctx,
-//		db,
-//		eventstore.NewMappingSQLiteConfig[postcard.Postcard](
-//			[]transport.EventMapper[postcard.Postcard]{
-//				CreatedMapper{},
-//				AddressedMapper{},
-//				WrittenMapper{},
-//				SentMapper{},
-//			},
-//		),
-//	)
-//}
+func NewDefaultMappingPostgresRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[postcard.Postcard], error) {
+	return eventstore.NewSQLStore[postcard.Postcard](
+		ctx,
+		db,
+		eventstore.NewMappingPostgresSQLConfig[postcard.Postcard](
+			"PostcardMappingDefault",
+			[]transport.Event[postcard.Postcard]{
+				Created{},
+				Addressed{},
+				Written{},
+				Sent{},
+			},
+		),
+	)
+}
+
+func NewCustomMappingPostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[postcard.Postcard], error) {
+	return eventstore.NewSQLStore[postcard.Postcard](
+		ctx,
+		db,
+		eventstore.SQLConfig[postcard.Postcard]{
+			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard]("PostcardMappingCustom"),
+			Mapper: transport.NewDefaultMapper(
+				[]transport.Event[postcard.Postcard]{
+					Created{},
+					Addressed{},
+					Written{},
+					Sent{},
+				},
+			),
+			Marshaler: transport.JSONMarshaler{},
+		},
+	)
+}
+
+func NewMappingAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[postcard.Postcard], error) {
+	return eventstore.NewSQLStore[postcard.Postcard](
+		ctx,
+		db,
+		eventstore.SQLConfig[postcard.Postcard]{
+			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard]("PostcardMappingAnonymized"),
+			Mapper: transport.NewAESAnonymizer[postcard.Postcard](
+				transport.NewDefaultMapper[postcard.Postcard](
+					[]transport.Event[postcard.Postcard]{
+						Created{},
+						Addressed{},
+						Written{},
+						Sent{},
+					},
+				),
+				ConstantSecretProvider{},
+			),
+			Marshaler: transport.JSONMarshaler{},
+		},
+	)
+}
+
+func NewMappingSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[postcard.Postcard], error) {
+	return eventstore.NewSQLStore[postcard.Postcard](
+		ctx,
+		db,
+		eventstore.NewMappingSQLiteConfig[postcard.Postcard](
+			"PostcardMappingSQLite",
+			[]transport.Event[postcard.Postcard]{
+				Created{},
+				Addressed{},
+				Written{},
+				Sent{},
+			},
+		),
+	)
+}
 
 type Created struct {
 	ID string `json:"id"`

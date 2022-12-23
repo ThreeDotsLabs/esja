@@ -103,7 +103,7 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (*T, error) {
 
 		event, err := s.config.Mapper.New(eventName)
 		if err != nil {
-			return nil, fmt.Errorf("error creating new event: %w", err)
+			return nil, fmt.Errorf("error creating new event instance: %w", err)
 		}
 
 		err = s.config.Marshaler.Unmarshal(streamID, eventPayload, event)

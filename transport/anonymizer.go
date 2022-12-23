@@ -26,16 +26,20 @@ func NewAESAnonymizer[T any](
 	}
 }
 
-func (s *AESAnonymizer[T]) FromStorage(
+func (a *AESAnonymizer[T]) New(name stream.EventName) (any, error) {
+	return a.mapper.New(name)
+}
+
+func (a *AESAnonymizer[T]) FromStorage(
 	streamID stream.ID,
 	payload any,
 ) (stream.Event[T], error) {
-	payload, err := s.anonymizer.Deanonymize(streamID, payload)
+	payload, err := a.anonymizer.Deanonymize(streamID, payload)
 	if err != nil {
 		return nil, err
 	}
 
-	event, err := s.mapper.FromStorage(streamID, payload)
+	event, err := a.mapper.FromStorage(streamID, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -43,16 +47,16 @@ func (s *AESAnonymizer[T]) FromStorage(
 	return event, nil
 }
 
-func (s *AESAnonymizer[T]) ToStorage(
+func (a *AESAnonymizer[T]) ToStorage(
 	streamID stream.ID,
 	event stream.Event[T],
 ) (any, error) {
-	e, err := s.mapper.ToStorage(streamID, event)
+	e, err := a.mapper.ToStorage(streamID, event)
 	if err != nil {
 		return nil, err
 	}
 
-	payload, err := s.anonymizer.Anonymize(streamID, &e)
+	payload, err := a.anonymizer.Anonymize(streamID, &e)
 	if err != nil {
 		return nil, err
 	}

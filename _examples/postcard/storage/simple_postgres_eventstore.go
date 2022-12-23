@@ -6,11 +6,11 @@ import (
 	"encoding/hex"
 	"strings"
 
-	"postcard"
-
 	"github.com/ThreeDotsLabs/esja/eventstore"
 	"github.com/ThreeDotsLabs/esja/stream"
 	"github.com/ThreeDotsLabs/esja/transport"
+
+	"postcard"
 )
 
 func NewDefaultSimplePostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[postcard.Postcard], error) {

@@ -16,6 +16,7 @@ type Postcard struct {
 	content   string
 	sent      bool
 }
+
 type Address struct {
 	Name  string `anonymize:"true"`
 	Line1 string

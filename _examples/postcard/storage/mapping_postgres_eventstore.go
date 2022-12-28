@@ -90,7 +90,7 @@ func (e Created) SupportedEvent() stream.Event[postcard.Postcard] {
 	return postcard.Created{}
 }
 
-func (e Created) FromEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
+func (e Created) NewFromEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
 	created := event.(postcard.Created)
 	e.ID = created.ID
 	return e
@@ -111,7 +111,7 @@ func (e Addressed) SupportedEvent() stream.Event[postcard.Postcard] {
 	return postcard.Addressed{}
 }
 
-func (e Addressed) FromEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
+func (e Addressed) NewFromEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
 	addressed := event.(postcard.Addressed)
 	e.Sender = Address(addressed.Sender)
 	e.Addressee = Address(addressed.Addressee)
@@ -140,7 +140,7 @@ func (e Written) SupportedEvent() stream.Event[postcard.Postcard] {
 	return postcard.Written{}
 }
 
-func (e Written) FromEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
+func (e Written) NewFromEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
 	written := event.(postcard.Written)
 	e.Content = written.Content
 	return e
@@ -158,7 +158,7 @@ func (e Sent) SupportedEvent() stream.Event[postcard.Postcard] {
 	return postcard.Sent{}
 }
 
-func (e Sent) FromEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
+func (e Sent) NewFromEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
 	_ = event.(postcard.Sent)
 	return e
 }

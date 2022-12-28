@@ -11,7 +11,7 @@ import (
 // it corresponds to and implements the mapping from- and to- the stream model.
 type Event[T any] interface {
 	SupportedEvent() stream.Event[T]
-	FromEvent(event stream.Event[T]) Event[T]
+	NewFromEvent(event stream.Event[T]) Event[T]
 	ToEvent() stream.Event[T]
 }
 
@@ -55,7 +55,7 @@ func (m DefaultMapper[T]) ToTransport(
 	}
 
 	newEvent := reflect.New(reflect.TypeOf(e)).Interface().(Event[T])
-	newEvent = newEvent.FromEvent(event)
+	newEvent = newEvent.NewFromEvent(event)
 
 	return newEvent, nil
 }

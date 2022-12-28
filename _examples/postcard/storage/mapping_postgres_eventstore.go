@@ -86,13 +86,13 @@ type Created struct {
 	ID string `json:"id"`
 }
 
-func (e Created) NewFromEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
+func (e Created) NewFromStreamEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
 	created := event.(postcard.Created)
 	e.ID = created.ID
 	return e
 }
 
-func (e Created) ToEvent() stream.Event[postcard.Postcard] {
+func (e Created) ToStreamEvent() stream.Event[postcard.Postcard] {
 	return postcard.Created{
 		ID: e.ID,
 	}
@@ -103,14 +103,14 @@ type Addressed struct {
 	Addressee Address `json:"addressee"`
 }
 
-func (e Addressed) NewFromEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
+func (e Addressed) NewFromStreamEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
 	addressed := event.(postcard.Addressed)
 	e.Sender = Address(addressed.Sender)
 	e.Addressee = Address(addressed.Addressee)
 	return e
 }
 
-func (e Addressed) ToEvent() stream.Event[postcard.Postcard] {
+func (e Addressed) ToStreamEvent() stream.Event[postcard.Postcard] {
 	return postcard.Addressed{
 		Sender:    postcard.Address(e.Sender),
 		Addressee: postcard.Address(e.Addressee),
@@ -128,13 +128,13 @@ type Written struct {
 	Content string `json:"content"`
 }
 
-func (e Written) NewFromEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
+func (e Written) NewFromStreamEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
 	written := event.(postcard.Written)
 	e.Content = written.Content
 	return e
 }
 
-func (e Written) ToEvent() stream.Event[postcard.Postcard] {
+func (e Written) ToStreamEvent() stream.Event[postcard.Postcard] {
 	return postcard.Written{
 		Content: e.Content,
 	}
@@ -142,11 +142,11 @@ func (e Written) ToEvent() stream.Event[postcard.Postcard] {
 
 type Sent struct{}
 
-func (e Sent) NewFromEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
+func (e Sent) NewFromStreamEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
 	_ = event.(postcard.Sent)
 	return e
 }
 
-func (e Sent) ToEvent() stream.Event[postcard.Postcard] {
+func (e Sent) ToStreamEvent() stream.Event[postcard.Postcard] {
 	return postcard.Sent{}
 }

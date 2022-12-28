@@ -25,25 +25,18 @@ type DefaultMapper[T any] struct {
 // NewDefaultMapper returns a new instance of a DefaultMapper.
 func NewDefaultMapper[T any](
 	supportedEvents []Event[T],
-) *DefaultMapper[T] {
+) DefaultMapper[T] {
 	supported := map[stream.EventName]Event[T]{}
 	for _, e := range supportedEvents {
 		supported[e.SupportedEvent().EventName()] = e
 	}
 
-	return &DefaultMapper[T]{
+	return DefaultMapper[T]{
 		supported: supported,
 	}
 }
 
-// RegisterEvent registers new transport model.
-// If there was a model corresponding to the same stream event already,
-// the old model will be replaced.
-func (m *DefaultMapper[T]) RegisterEvent(e Event[T]) {
-	m.supported[e.SupportedEvent().EventName()] = e
-}
-
-func (m *DefaultMapper[T]) New(name stream.EventName) (any, error) {
+func (m DefaultMapper[T]) New(name stream.EventName) (any, error) {
 	e, err := m.eventForEventName(name)
 	if err != nil {
 		return nil, err
@@ -52,7 +45,7 @@ func (m *DefaultMapper[T]) New(name stream.EventName) (any, error) {
 	return newInstance(e), nil
 }
 
-func (m *DefaultMapper[T]) ToTransport(
+func (m DefaultMapper[T]) ToTransport(
 	_ stream.ID,
 	event stream.Event[T],
 ) (any, error) {
@@ -67,7 +60,7 @@ func (m *DefaultMapper[T]) ToTransport(
 	return newEvent, nil
 }
 
-func (m *DefaultMapper[T]) FromTransport(
+func (m DefaultMapper[T]) FromTransport(
 	_ stream.ID,
 	i any,
 ) (stream.Event[T], error) {
@@ -79,7 +72,7 @@ func (m *DefaultMapper[T]) FromTransport(
 	return e.ToEvent(), nil
 }
 
-func (m *DefaultMapper[T]) eventForEventName(name stream.EventName) (Event[T], error) {
+func (m DefaultMapper[T]) eventForEventName(name stream.EventName) (Event[T], error) {
 	e, ok := m.supported[name]
 	if !ok {
 		return nil, fmt.Errorf("unsupported event of name '%s'", name)

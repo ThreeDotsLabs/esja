@@ -8,16 +8,16 @@ type Mapper[T any] interface {
 	// corresponding to provided stream.EventName.
 	New(stream.EventName) (any, error)
 
-	// FromStorage maps corresponding transport model
+	// FromTransport maps corresponding transport model
 	// into an instance of a stream.Event.
-	FromStorage(
+	FromTransport(
 		stream.ID,
 		any,
 	) (stream.Event[T], error)
 
-	// ToStorage maps a stream.Event into an instance of
+	// ToTransport maps a stream.Event into an instance of
 	// a corresponding transport model.
-	ToStorage(
+	ToTransport(
 		stream.ID,
 		stream.Event[T],
 	) (any, error)

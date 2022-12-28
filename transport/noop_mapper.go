@@ -41,14 +41,14 @@ func (m *NoOpMapper[T]) New(name stream.EventName) (any, error) {
 	return newInstance(e), nil
 }
 
-func (m *NoOpMapper[T]) ToStorage(
+func (m *NoOpMapper[T]) ToTransport(
 	_ stream.ID,
 	event stream.Event[T],
 ) (any, error) {
 	return event, nil
 }
 
-func (m *NoOpMapper[T]) FromStorage(
+func (m *NoOpMapper[T]) FromTransport(
 	_ stream.ID,
 	payload any,
 ) (stream.Event[T], error) {

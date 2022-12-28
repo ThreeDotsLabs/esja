@@ -52,7 +52,7 @@ func (m *DefaultMapper[T]) New(name stream.EventName) (any, error) {
 	return newInstance(e), nil
 }
 
-func (m *DefaultMapper[T]) ToStorage(
+func (m *DefaultMapper[T]) ToTransport(
 	_ stream.ID,
 	event stream.Event[T],
 ) (any, error) {
@@ -67,7 +67,7 @@ func (m *DefaultMapper[T]) ToStorage(
 	return newEvent, nil
 }
 
-func (m *DefaultMapper[T]) FromStorage(
+func (m *DefaultMapper[T]) FromTransport(
 	_ stream.ID,
 	i any,
 ) (stream.Event[T], error) {

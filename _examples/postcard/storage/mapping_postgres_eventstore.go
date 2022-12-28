@@ -86,10 +86,6 @@ type Created struct {
 	ID string `json:"id"`
 }
 
-func (e Created) SupportedEvent() stream.Event[postcard.Postcard] {
-	return postcard.Created{}
-}
-
 func (e Created) NewFromEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
 	created := event.(postcard.Created)
 	e.ID = created.ID
@@ -105,10 +101,6 @@ func (e Created) ToEvent() stream.Event[postcard.Postcard] {
 type Addressed struct {
 	Sender    Address `json:"sender"`
 	Addressee Address `json:"addressee"`
-}
-
-func (e Addressed) SupportedEvent() stream.Event[postcard.Postcard] {
-	return postcard.Addressed{}
 }
 
 func (e Addressed) NewFromEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
@@ -136,10 +128,6 @@ type Written struct {
 	Content string `json:"content"`
 }
 
-func (e Written) SupportedEvent() stream.Event[postcard.Postcard] {
-	return postcard.Written{}
-}
-
 func (e Written) NewFromEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
 	written := event.(postcard.Written)
 	e.Content = written.Content
@@ -153,10 +141,6 @@ func (e Written) ToEvent() stream.Event[postcard.Postcard] {
 }
 
 type Sent struct{}
-
-func (e Sent) SupportedEvent() stream.Event[postcard.Postcard] {
-	return postcard.Sent{}
-}
 
 func (e Sent) NewFromEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
 	_ = event.(postcard.Sent)

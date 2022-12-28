@@ -10,7 +10,6 @@ import (
 // Event is a transport model which defines which stream model
 // it corresponds to and implements the mapping from- and to- the stream model.
 type Event[T any] interface {
-	SupportedEvent() stream.Event[T]
 	NewFromEvent(event stream.Event[T]) Event[T]
 	ToEvent() stream.Event[T]
 }
@@ -28,7 +27,7 @@ func NewDefaultMapper[T any](
 ) DefaultMapper[T] {
 	supported := map[stream.EventName]Event[T]{}
 	for _, e := range supportedEvents {
-		supported[e.SupportedEvent().EventName()] = e
+		supported[e.ToEvent().EventName()] = e
 	}
 
 	return DefaultMapper[T]{

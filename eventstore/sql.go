@@ -106,7 +106,7 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (*T, error) {
 			return nil, fmt.Errorf("error creating new event instance: %w", err)
 		}
 
-		err = s.config.Marshaler.Unmarshal(streamID, eventPayload, event)
+		err = s.config.Marshaler.Unmarshal(eventPayload, event)
 		if err != nil {
 			return nil, fmt.Errorf("error unmarshaling event payload: %w", err)
 		}
@@ -149,7 +149,7 @@ func (s SQLStore[T]) Save(ctx context.Context, t *T) (err error) {
 			return fmt.Errorf("error serializing event: %w", err)
 		}
 
-		payload, err := s.config.Marshaler.Marshal(stm.StreamID(), mapped)
+		payload, err := s.config.Marshaler.Marshal(mapped)
 		if err != nil {
 			return fmt.Errorf("error marshaling event payload: %w", err)
 		}

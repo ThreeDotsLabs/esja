@@ -18,7 +18,6 @@ func NewDefaultSimplePostcardRepository(ctx context.Context, db *sql.DB) (events
 		ctx,
 		db,
 		eventstore.NewPostgresSQLConfig[postcard.Postcard](
-			"PostcardSimpleDefault",
 			[]stream.Event[postcard.Postcard]{
 				postcard.Created{},
 				postcard.Addressed{},
@@ -34,7 +33,7 @@ func NewCustomSimplePostcardRepository(ctx context.Context, db *sql.DB) (eventst
 		ctx,
 		db,
 		eventstore.SQLConfig[postcard.Postcard]{
-			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard]("PostcardSimpleCustom"),
+			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard](),
 			Mapper: transport.NewNoOpMapper(
 				[]stream.Event[postcard.Postcard]{
 					postcard.Created{},
@@ -53,7 +52,7 @@ func NewSimpleAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (ev
 		ctx,
 		db,
 		eventstore.SQLConfig[postcard.Postcard]{
-			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard]("PostcardSimpleAnonymized"),
+			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard](),
 			Mapper: transport.NewAESAnonymizer[postcard.Postcard](
 				transport.NewNoOpMapper[postcard.Postcard](
 					[]stream.Event[postcard.Postcard]{
@@ -75,7 +74,6 @@ func NewSimpleSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventst
 		ctx,
 		db,
 		eventstore.NewSQLiteConfig[postcard.Postcard](
-			"PostcardMappingSQLite",
 			[]stream.Event[postcard.Postcard]{
 				postcard.Created{},
 				postcard.Addressed{},

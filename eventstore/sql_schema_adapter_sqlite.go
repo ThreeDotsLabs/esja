@@ -2,6 +2,8 @@ package eventstore
 
 import (
 	"fmt"
+
+	"github.com/ThreeDotsLabs/esja/stream"
 )
 
 const sqliteInitializeSchemaQuery = `
@@ -22,9 +24,9 @@ type SQLiteSchemaAdapter[A any] struct {
 	streamType string
 }
 
-func NewSQLiteSchemaAdapter[A any](streamType string) SQLiteSchemaAdapter[A] {
+func NewSQLiteSchemaAdapter[A any]() SQLiteSchemaAdapter[A] {
 	return SQLiteSchemaAdapter[A]{
-		streamType: streamType,
+		streamType: stream.GetStreamType[A](),
 	}
 }
 

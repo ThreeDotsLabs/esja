@@ -2,6 +2,8 @@ package eventstore
 
 import (
 	"fmt"
+
+	"github.com/ThreeDotsLabs/esja/stream"
 )
 
 const postgresInitializeSchemaQuery = `
@@ -23,9 +25,9 @@ type PostgresSchemaAdapter[A any] struct {
 	streamType string
 }
 
-func NewPostgresSchemaAdapter[A any](streamType string) PostgresSchemaAdapter[A] {
+func NewPostgresSchemaAdapter[A any]() PostgresSchemaAdapter[A] {
 	return PostgresSchemaAdapter[A]{
-		streamType: streamType,
+		streamType: stream.GetStreamType[A](),
 	}
 }
 

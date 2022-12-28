@@ -16,7 +16,6 @@ func NewDefaultMappingPostgresRepository(ctx context.Context, db *sql.DB) (event
 		ctx,
 		db,
 		eventstore.NewMappingPostgresSQLConfig[postcard.Postcard](
-			"PostcardMappingDefault",
 			[]transport.Event[postcard.Postcard]{
 				Created{},
 				Addressed{},
@@ -32,7 +31,7 @@ func NewCustomMappingPostcardRepository(ctx context.Context, db *sql.DB) (events
 		ctx,
 		db,
 		eventstore.SQLConfig[postcard.Postcard]{
-			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard]("PostcardMappingCustom"),
+			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard](),
 			Mapper: transport.NewDefaultMapper(
 				[]transport.Event[postcard.Postcard]{
 					Created{},
@@ -51,7 +50,7 @@ func NewMappingAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (e
 		ctx,
 		db,
 		eventstore.SQLConfig[postcard.Postcard]{
-			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard]("PostcardMappingAnonymized"),
+			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard](),
 			Mapper: transport.NewAESAnonymizer[postcard.Postcard](
 				transport.NewDefaultMapper[postcard.Postcard](
 					[]transport.Event[postcard.Postcard]{
@@ -73,7 +72,6 @@ func NewMappingSQLitePostcardRepository(ctx context.Context, db *sql.DB) (events
 		ctx,
 		db,
 		eventstore.NewMappingSQLiteConfig[postcard.Postcard](
-			"PostcardMappingSQLite",
 			[]transport.Event[postcard.Postcard]{
 				Created{},
 				Addressed{},

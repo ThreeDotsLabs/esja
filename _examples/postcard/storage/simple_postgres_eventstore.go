@@ -33,9 +33,8 @@ func NewCustomSimplePostcardRepository(ctx context.Context, db *sql.DB) (eventst
 		ctx,
 		db,
 		eventstore.SQLConfig[postcard.Postcard]{
-			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard]("PostcardSimple"),
-			Serializer: transport.NewSimpleSerializer(
-				transport.JSONMarshaler{},
+			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard](),
+			Mapper: transport.NewNoOpMapper(
 				[]stream.Event[postcard.Postcard]{
 					postcard.Created{},
 					postcard.Addressed{},
@@ -43,6 +42,7 @@ func NewCustomSimplePostcardRepository(ctx context.Context, db *sql.DB) (eventst
 					postcard.Sent{},
 				},
 			),
+			Marshaler: transport.JSONMarshaler{},
 		},
 	)
 }
@@ -52,10 +52,9 @@ func NewSimpleAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (ev
 		ctx,
 		db,
 		eventstore.SQLConfig[postcard.Postcard]{
-			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard]("PostcardSimpleAnonymizing"),
-			Serializer: transport.NewAESAnonymizingSerializer[postcard.Postcard](
-				transport.NewSimpleSerializer[postcard.Postcard](
-					transport.JSONMarshaler{},
+			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard](),
+			Mapper: transport.NewAESAnonymizer[postcard.Postcard](
+				transport.NewNoOpMapper[postcard.Postcard](
 					[]stream.Event[postcard.Postcard]{
 						postcard.Created{},
 						postcard.Addressed{},
@@ -65,6 +64,7 @@ func NewSimpleAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (ev
 				),
 				ConstantSecretProvider{},
 			),
+			Marshaler: transport.JSONMarshaler{},
 		},
 	)
 }
@@ -89,9 +89,8 @@ func NewGOBSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventstore
 		ctx,
 		db,
 		eventstore.SQLConfig[postcard.Postcard]{
-			SchemaAdapter: eventstore.NewSQLiteSchemaAdapter[postcard.Postcard](""),
-			Serializer: transport.NewSimpleSerializer[postcard.Postcard](
-				transport.GOBMarshaler{},
+			SchemaAdapter: eventstore.NewSQLiteSchemaAdapter[postcard.Postcard](),
+			Mapper: transport.NewNoOpMapper[postcard.Postcard](
 				[]stream.Event[postcard.Postcard]{
 					postcard.Created{},
 					postcard.Addressed{},
@@ -99,6 +98,7 @@ func NewGOBSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventstore
 					postcard.Sent{},
 				},
 			),
+			Marshaler: transport.GOBMarshaler{},
 		},
 	)
 }

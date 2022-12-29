@@ -42,7 +42,7 @@ func (e *Events[A]) Record(event Event[A]) {
 
 // PopEvents returns the events on the queue and clears it.
 func (e *Events[A]) PopEvents() []VersionedEvent[A] {
-	var tmp = make([]VersionedEvent[A], len(e.queue))
+	tmp := make([]VersionedEvent[A], len(e.queue))
 	copy(tmp, e.queue)
 	e.queue = []VersionedEvent[A]{}
 

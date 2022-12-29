@@ -102,7 +102,7 @@ func TestPostcard_Repositories(t *testing.T) {
 			}(),
 		},
 		{
-			name: "sqlite_gob",
+			name: "sqlite_simple_gob",
 			repository: func() eventstore.EventStore[postcard.Postcard] {
 				repo, err := storage.NewGOBSQLitePostcardRepository(context.Background(), sqliteDB)
 				require.NoError(t, err)
@@ -113,6 +113,14 @@ func TestPostcard_Repositories(t *testing.T) {
 			name: "sqlite_mapping",
 			repository: func() eventstore.EventStore[postcard.Postcard] {
 				repo, err := storage.NewMappingSQLitePostcardRepository(context.Background(), sqliteDB)
+				require.NoError(t, err)
+				return repo
+			}(),
+		},
+		{
+			name: "sqlite_mapping_gob",
+			repository: func() eventstore.EventStore[postcard.Postcard] {
+				repo, err := storage.NewGOBMappingSQLitePostcardRepository(context.Background(), sqliteDB)
 				require.NoError(t, err)
 				return repo
 			}(),

@@ -19,14 +19,10 @@ CREATE INDEX IF NOT EXISTS idx_stream_id ON %[1]s (stream_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_stream_id_version ON %[1]s (stream_id, stream_version);
 `
 
-type PostgresSchemaAdapter[A any] struct {
-	streamType string
-}
+type PostgresSchemaAdapter[A any] struct{}
 
-func NewPostgresSchemaAdapter[A any](streamType string) PostgresSchemaAdapter[A] {
-	return PostgresSchemaAdapter[A]{
-		streamType: streamType,
-	}
+func NewPostgresSchemaAdapter[A any]() PostgresSchemaAdapter[A] {
+	return PostgresSchemaAdapter[A]{}
 }
 
 func (a PostgresSchemaAdapter[A]) InitializeSchemaQuery() string {
@@ -37,13 +33,13 @@ func (a PostgresSchemaAdapter[A]) SelectQuery(streamID string) (string, []any, e
 	query := fmt.Sprintf(defaultSelectQuery, defaultEventsTableName)
 
 	args := []any{
-		streamID, a.streamType,
+		streamID,
 	}
 
 	return query, args, nil
 }
 
-func (a PostgresSchemaAdapter[A]) InsertQuery(events []storageEvent[A]) (string, []any, error) {
+func (a PostgresSchemaAdapter[A]) InsertQuery(streamType string, events []storageEvent[A]) (string, []any, error) {
 	query := fmt.Sprintf(defaultInsertQuery, defaultEventsTableName, defaultInsertMarkers(len(events)))
 
 	var args []any
@@ -52,12 +48,11 @@ func (a PostgresSchemaAdapter[A]) InsertQuery(events []storageEvent[A]) (string,
 			args,
 			e.streamID,
 			e.StreamVersion,
-			a.streamType,
+			streamType,
 			e.EventName(),
 			e.payload,
 		)
 	}
 
 	return query, args, nil
-
 }

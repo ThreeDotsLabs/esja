@@ -16,11 +16,11 @@ func NewDefaultMappingPostgresRepository(ctx context.Context, db *sql.DB) (event
 		ctx,
 		db,
 		eventstore.NewMappingPostgresSQLConfig[postcard.Postcard](
-			[]transport.EventMapper[postcard.Postcard]{
-				CreatedMapper{},
-				AddressedMapper{},
-				WrittenMapper{},
-				SentMapper{},
+			[]transport.Event[postcard.Postcard]{
+				&Created{},
+				&Addressed{},
+				&Written{},
+				&Sent{},
 			},
 		),
 	)
@@ -31,16 +31,16 @@ func NewCustomMappingPostcardRepository(ctx context.Context, db *sql.DB) (events
 		ctx,
 		db,
 		eventstore.SQLConfig[postcard.Postcard]{
-			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard]("PostcardMapping"),
-			Serializer: transport.NewMappingSerializer(
-				transport.JSONMarshaler{},
-				[]transport.EventMapper[postcard.Postcard]{
-					CreatedMapper{},
-					AddressedMapper{},
-					WrittenMapper{},
-					SentMapper{},
+			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard](),
+			Mapper: transport.NewDefaultMapper(
+				[]transport.Event[postcard.Postcard]{
+					&Created{},
+					&Addressed{},
+					&Written{},
+					&Sent{},
 				},
 			),
+			Marshaler: transport.JSONMarshaler{},
 		},
 	)
 }
@@ -50,19 +50,19 @@ func NewMappingAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (e
 		ctx,
 		db,
 		eventstore.SQLConfig[postcard.Postcard]{
-			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard]("PostcardMappingAnonymizing"),
-			Serializer: transport.NewAESAnonymizingSerializer[postcard.Postcard](
-				transport.NewMappingSerializer[postcard.Postcard](
-					transport.JSONMarshaler{},
-					[]transport.EventMapper[postcard.Postcard]{
-						CreatedMapper{},
-						AddressedMapper{},
-						WrittenMapper{},
-						SentMapper{},
+			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard](),
+			Mapper: transport.NewAESAnonymizer[postcard.Postcard](
+				transport.NewDefaultMapper[postcard.Postcard](
+					[]transport.Event[postcard.Postcard]{
+						&Created{},
+						&Addressed{},
+						&Written{},
+						&Sent{},
 					},
 				),
 				ConstantSecretProvider{},
 			),
+			Marshaler: transport.JSONMarshaler{},
 		},
 	)
 }
@@ -72,13 +72,32 @@ func NewMappingSQLitePostcardRepository(ctx context.Context, db *sql.DB) (events
 		ctx,
 		db,
 		eventstore.NewMappingSQLiteConfig[postcard.Postcard](
-			[]transport.EventMapper[postcard.Postcard]{
-				CreatedMapper{},
-				AddressedMapper{},
-				WrittenMapper{},
-				SentMapper{},
+			[]transport.Event[postcard.Postcard]{
+				&Created{},
+				&Addressed{},
+				&Written{},
+				&Sent{},
 			},
 		),
+	)
+}
+
+func NewGOBMappingSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[postcard.Postcard], error) {
+	return eventstore.NewSQLStore[postcard.Postcard](
+		ctx,
+		db,
+		eventstore.SQLConfig[postcard.Postcard]{
+			SchemaAdapter: eventstore.NewSQLiteSchemaAdapter[postcard.Postcard](),
+			Mapper: transport.NewDefaultMapper[postcard.Postcard](
+				[]transport.Event[postcard.Postcard]{
+					&Created{},
+					&Addressed{},
+					&Written{},
+					&Sent{},
+				},
+			),
+			Marshaler: transport.GOBMarshaler{},
+		},
 	)
 }
 
@@ -86,25 +105,12 @@ type Created struct {
 	ID string `json:"id"`
 }
 
-type CreatedMapper struct{}
-
-func (CreatedMapper) SupportedEvent() stream.Event[postcard.Postcard] {
-	return postcard.Created{}
+func (e *Created) FromStreamEvent(event stream.Event[postcard.Postcard]) {
+	created := event.(postcard.Created)
+	e.ID = created.ID
 }
 
-func (CreatedMapper) StorageEvent() any {
-	return Created{}
-}
-
-func (CreatedMapper) ToStorage(event stream.Event[postcard.Postcard]) any {
-	e := event.(postcard.Created)
-	return Created{
-		ID: e.ID,
-	}
-}
-
-func (CreatedMapper) FromStorage(event any) stream.Event[postcard.Postcard] {
-	e := event.(Created)
+func (e *Created) ToStreamEvent() stream.Event[postcard.Postcard] {
 	return postcard.Created{
 		ID: e.ID,
 	}
@@ -115,26 +121,13 @@ type Addressed struct {
 	Addressee Address `json:"addressee"`
 }
 
-type AddressedMapper struct{}
-
-func (AddressedMapper) SupportedEvent() stream.Event[postcard.Postcard] {
-	return postcard.Addressed{}
+func (e *Addressed) FromStreamEvent(event stream.Event[postcard.Postcard]) {
+	addressed := event.(postcard.Addressed)
+	e.Sender = Address(addressed.Sender)
+	e.Addressee = Address(addressed.Addressee)
 }
 
-func (AddressedMapper) StorageEvent() any {
-	return Addressed{}
-}
-
-func (AddressedMapper) ToStorage(event stream.Event[postcard.Postcard]) any {
-	e := event.(postcard.Addressed)
-	return Addressed{
-		Sender:    Address(e.Sender),
-		Addressee: Address(e.Addressee),
-	}
-}
-
-func (AddressedMapper) FromStorage(event any) stream.Event[postcard.Postcard] {
-	e := event.(Addressed)
+func (e *Addressed) ToStreamEvent() stream.Event[postcard.Postcard] {
 	return postcard.Addressed{
 		Sender:    postcard.Address(e.Sender),
 		Addressee: postcard.Address(e.Addressee),
@@ -152,25 +145,12 @@ type Written struct {
 	Content string `json:"content"`
 }
 
-type WrittenMapper struct{}
-
-func (WrittenMapper) SupportedEvent() stream.Event[postcard.Postcard] {
-	return postcard.Written{}
+func (e *Written) FromStreamEvent(event stream.Event[postcard.Postcard]) {
+	written := event.(postcard.Written)
+	e.Content = written.Content
 }
 
-func (WrittenMapper) StorageEvent() any {
-	return Written{}
-}
-
-func (WrittenMapper) ToStorage(e stream.Event[postcard.Postcard]) any {
-	ev := e.(postcard.Written)
-	return Written{
-		Content: ev.Content,
-	}
-}
-
-func (WrittenMapper) FromStorage(event any) stream.Event[postcard.Postcard] {
-	e := event.(Written)
+func (e *Written) ToStreamEvent() stream.Event[postcard.Postcard] {
 	return postcard.Written{
 		Content: e.Content,
 	}
@@ -178,20 +158,8 @@ func (WrittenMapper) FromStorage(event any) stream.Event[postcard.Postcard] {
 
 type Sent struct{}
 
-type SentMapper struct{}
+func (e *Sent) FromStreamEvent(_ stream.Event[postcard.Postcard]) {}
 
-func (SentMapper) SupportedEvent() stream.Event[postcard.Postcard] {
-	return postcard.Sent{}
-}
-
-func (SentMapper) StorageEvent() any {
-	return Sent{}
-}
-
-func (SentMapper) ToStorage(event stream.Event[postcard.Postcard]) any {
-	return Sent{}
-}
-
-func (SentMapper) FromStorage(event any) stream.Event[postcard.Postcard] {
+func (e *Sent) ToStreamEvent() stream.Event[postcard.Postcard] {
 	return postcard.Sent{}
 }

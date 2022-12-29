@@ -24,7 +24,7 @@ type storageEvent[A any] struct {
 type schemaAdapter[A any] interface {
 	InitializeSchemaQuery() string
 	SelectQuery(streamID string) (string, []any, error)
-	InsertQuery(events []storageEvent[A]) (string, []any, error)
+	InsertQuery(streamType string, events []storageEvent[A]) (string, []any, error)
 }
 
 // SQLStore is an implementation of the EventStore interface using an SQLStore database.
@@ -101,16 +101,25 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (*T, error) {
 			return nil, fmt.Errorf("error reading row result: %w", err)
 		}
 
-		event, err := s.config.Serializer.Deserialize(streamID, eventName, eventPayload)
+		event, err := s.config.Mapper.New(eventName)
+		if err != nil {
+			return nil, fmt.Errorf("error creating new event instance: %w", err)
+		}
+
+		err = s.config.Marshaler.Unmarshal(eventPayload, event)
+		if err != nil {
+			return nil, fmt.Errorf("error unmarshaling event payload: %w", err)
+		}
+
+		mappedEvent, err := s.config.Mapper.FromTransport(streamID, event)
 		if err != nil {
 			return nil, fmt.Errorf("error deserializing event: %w", err)
 		}
 
-		versionedEvent := stream.VersionedEvent[T]{
-			Event:         event,
+		events = append(events, stream.VersionedEvent[T]{
+			Event:         mappedEvent,
 			StreamVersion: streamVersion,
-		}
-		events = append(events, versionedEvent)
+		})
 	}
 
 	if len(events) == 0 {
@@ -135,9 +144,14 @@ func (s SQLStore[T]) Save(ctx context.Context, t *T) (err error) {
 
 	serializedEvents := make([]storageEvent[T], len(events))
 	for i, event := range events {
-		payload, err := s.config.Serializer.Serialize(stm.StreamID(), event.Event)
+		mapped, err := s.config.Mapper.ToTransport(stm.StreamID(), event.Event)
 		if err != nil {
 			return fmt.Errorf("error serializing event: %w", err)
+		}
+
+		payload, err := s.config.Marshaler.Marshal(mapped)
+		if err != nil {
+			return fmt.Errorf("error marshaling event payload: %w", err)
 		}
 
 		serializedEvents[i] = storageEvent[T]{
@@ -147,7 +161,8 @@ func (s SQLStore[T]) Save(ctx context.Context, t *T) (err error) {
 		}
 	}
 
-	query, args, err := s.config.SchemaAdapter.InsertQuery(serializedEvents)
+	stmType := stream.GetStreamType(t)
+	query, args, err := s.config.SchemaAdapter.InsertQuery(stmType, serializedEvents)
 	if err != nil {
 		return fmt.Errorf("error building insert query: %w", err)
 	}

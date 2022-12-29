@@ -9,11 +9,10 @@ type TypedStream interface {
 // GetStreamType returns stream type of generic type if
 // it implemented the TypedStream interface.
 // Otherwise, the empty string is returned.
-func GetStreamType[A any]() string {
+func GetStreamType(stream any) string {
 	streamType := ""
 
-	var a interface{} = new(A)
-	st, ok := a.(TypedStream)
+	st, ok := stream.(TypedStream)
 	if ok {
 		streamType = st.StreamType()
 	}

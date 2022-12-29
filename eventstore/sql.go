@@ -24,7 +24,7 @@ type storageEvent[A any] struct {
 type schemaAdapter[A any] interface {
 	InitializeSchemaQuery() string
 	SelectQuery(streamID string) (string, []any, error)
-	InsertQuery(events []storageEvent[A]) (string, []any, error)
+	InsertQuery(streamType string, events []storageEvent[A]) (string, []any, error)
 }
 
 // SQLStore is an implementation of the EventStore interface using an SQLStore database.
@@ -161,7 +161,8 @@ func (s SQLStore[T]) Save(ctx context.Context, t *T) (err error) {
 		}
 	}
 
-	query, args, err := s.config.SchemaAdapter.InsertQuery(serializedEvents)
+	stmType := stream.GetStreamType(t)
+	query, args, err := s.config.SchemaAdapter.InsertQuery(stmType, serializedEvents)
 	if err != nil {
 		return fmt.Errorf("error building insert query: %w", err)
 	}

@@ -7,9 +7,7 @@ import (
 	"github.com/ThreeDotsLabs/esja/stream"
 )
 
-var (
-	ErrStreamNotFound = errors.New("stream not found by ID")
-)
+var ErrStreamNotFound = errors.New("stream not found by ID")
 
 // EventStore loads and saves T implementing stream.Stream
 type EventStore[T stream.Stream[T]] interface {

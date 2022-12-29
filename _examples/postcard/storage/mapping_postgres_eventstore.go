@@ -158,9 +158,7 @@ func (e *Written) ToStreamEvent() stream.Event[postcard.Postcard] {
 
 type Sent struct{}
 
-func (e *Sent) FromStreamEvent(event stream.Event[postcard.Postcard]) {
-	_ = event.(postcard.Sent)
-}
+func (e *Sent) FromStreamEvent(_ stream.Event[postcard.Postcard]) {}
 
 func (e *Sent) ToStreamEvent() stream.Event[postcard.Postcard] {
 	return postcard.Sent{}

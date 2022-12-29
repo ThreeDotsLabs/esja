@@ -10,7 +10,7 @@ import (
 // Event is a transport model which defines which stream model
 // it corresponds to and implements the mapping from- and to- the stream model.
 type Event[T any] interface {
-	NewFromStreamEvent(event stream.Event[T]) Event[T]
+	FromStreamEvent(event stream.Event[T])
 	ToStreamEvent() stream.Event[T]
 }
 
@@ -41,7 +41,7 @@ func (m DefaultMapper[T]) New(name stream.EventName) (any, error) {
 		return nil, err
 	}
 
-	return newInstance(e), nil
+	return newPtr(e), nil
 }
 
 func (m DefaultMapper[T]) ToTransport(
@@ -53,8 +53,8 @@ func (m DefaultMapper[T]) ToTransport(
 		return nil, err
 	}
 
-	newEvent := reflect.New(reflect.TypeOf(e)).Interface().(Event[T])
-	newEvent = newEvent.NewFromStreamEvent(event)
+	newEvent := newPtr(e).(Event[T])
+	newEvent.FromStreamEvent(event)
 
 	return newEvent, nil
 }
@@ -78,4 +78,8 @@ func (m DefaultMapper[T]) eventForEventName(name stream.EventName) (Event[T], er
 	}
 
 	return e, nil
+}
+
+func newPtr(e any) any {
+	return reflect.New(reflect.TypeOf(e).Elem()).Interface()
 }

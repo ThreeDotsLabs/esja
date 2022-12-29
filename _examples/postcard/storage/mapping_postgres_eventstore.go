@@ -17,10 +17,10 @@ func NewDefaultMappingPostgresRepository(ctx context.Context, db *sql.DB) (event
 		db,
 		eventstore.NewMappingPostgresSQLConfig[postcard.Postcard](
 			[]transport.Event[postcard.Postcard]{
-				Created{},
-				Addressed{},
-				Written{},
-				Sent{},
+				&Created{},
+				&Addressed{},
+				&Written{},
+				&Sent{},
 			},
 		),
 	)
@@ -34,10 +34,10 @@ func NewCustomMappingPostcardRepository(ctx context.Context, db *sql.DB) (events
 			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard](),
 			Mapper: transport.NewDefaultMapper(
 				[]transport.Event[postcard.Postcard]{
-					Created{},
-					Addressed{},
-					Written{},
-					Sent{},
+					&Created{},
+					&Addressed{},
+					&Written{},
+					&Sent{},
 				},
 			),
 			Marshaler: transport.JSONMarshaler{},
@@ -54,10 +54,10 @@ func NewMappingAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (e
 			Mapper: transport.NewAESAnonymizer[postcard.Postcard](
 				transport.NewDefaultMapper[postcard.Postcard](
 					[]transport.Event[postcard.Postcard]{
-						Created{},
-						Addressed{},
-						Written{},
-						Sent{},
+						&Created{},
+						&Addressed{},
+						&Written{},
+						&Sent{},
 					},
 				),
 				ConstantSecretProvider{},
@@ -73,10 +73,10 @@ func NewMappingSQLitePostcardRepository(ctx context.Context, db *sql.DB) (events
 		db,
 		eventstore.NewMappingSQLiteConfig[postcard.Postcard](
 			[]transport.Event[postcard.Postcard]{
-				Created{},
-				Addressed{},
-				Written{},
-				Sent{},
+				&Created{},
+				&Addressed{},
+				&Written{},
+				&Sent{},
 			},
 		),
 	)
@@ -90,10 +90,10 @@ func NewGOBMappingSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eve
 			SchemaAdapter: eventstore.NewSQLiteSchemaAdapter[postcard.Postcard](),
 			Mapper: transport.NewDefaultMapper[postcard.Postcard](
 				[]transport.Event[postcard.Postcard]{
-					Created{},
-					Addressed{},
-					Written{},
-					Sent{},
+					&Created{},
+					&Addressed{},
+					&Written{},
+					&Sent{},
 				},
 			),
 			Marshaler: transport.GOBMarshaler{},
@@ -105,13 +105,12 @@ type Created struct {
 	ID string `json:"id"`
 }
 
-func (e Created) NewFromStreamEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
+func (e *Created) FromStreamEvent(event stream.Event[postcard.Postcard]) {
 	created := event.(postcard.Created)
 	e.ID = created.ID
-	return e
 }
 
-func (e Created) ToStreamEvent() stream.Event[postcard.Postcard] {
+func (e *Created) ToStreamEvent() stream.Event[postcard.Postcard] {
 	return postcard.Created{
 		ID: e.ID,
 	}
@@ -122,14 +121,13 @@ type Addressed struct {
 	Addressee Address `json:"addressee"`
 }
 
-func (e Addressed) NewFromStreamEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
+func (e *Addressed) FromStreamEvent(event stream.Event[postcard.Postcard]) {
 	addressed := event.(postcard.Addressed)
 	e.Sender = Address(addressed.Sender)
 	e.Addressee = Address(addressed.Addressee)
-	return e
 }
 
-func (e Addressed) ToStreamEvent() stream.Event[postcard.Postcard] {
+func (e *Addressed) ToStreamEvent() stream.Event[postcard.Postcard] {
 	return postcard.Addressed{
 		Sender:    postcard.Address(e.Sender),
 		Addressee: postcard.Address(e.Addressee),
@@ -147,13 +145,12 @@ type Written struct {
 	Content string `json:"content"`
 }
 
-func (e Written) NewFromStreamEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
+func (e *Written) FromStreamEvent(event stream.Event[postcard.Postcard]) {
 	written := event.(postcard.Written)
 	e.Content = written.Content
-	return e
 }
 
-func (e Written) ToStreamEvent() stream.Event[postcard.Postcard] {
+func (e *Written) ToStreamEvent() stream.Event[postcard.Postcard] {
 	return postcard.Written{
 		Content: e.Content,
 	}
@@ -161,11 +158,10 @@ func (e Written) ToStreamEvent() stream.Event[postcard.Postcard] {
 
 type Sent struct{}
 
-func (e Sent) NewFromStreamEvent(event stream.Event[postcard.Postcard]) transport.Event[postcard.Postcard] {
+func (e *Sent) FromStreamEvent(event stream.Event[postcard.Postcard]) {
 	_ = event.(postcard.Sent)
-	return e
 }
 
-func (e Sent) ToStreamEvent() stream.Event[postcard.Postcard] {
+func (e *Sent) ToStreamEvent() stream.Event[postcard.Postcard] {
 	return postcard.Sent{}
 }

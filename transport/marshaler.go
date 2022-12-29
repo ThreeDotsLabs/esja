@@ -23,14 +23,14 @@ func (JSONMarshaler) Unmarshal(bytes []byte, target interface{}) error {
 
 type GOBMarshaler struct{}
 
-func (GOBMarshaler) Marshal(_ stream.ID, data interface{}) ([]byte, error) {
+func (GOBMarshaler) Marshal(data interface{}) ([]byte, error) {
 	b := bytes.NewBuffer([]byte{})
 	e := gob.NewEncoder(b)
 	err := e.Encode(data)
 	return b.Bytes(), err
 }
 
-func (GOBMarshaler) Unmarshal(_ stream.ID, data []byte, target interface{}) error {
+func (GOBMarshaler) Unmarshal(data []byte, target interface{}) error {
 	b := bytes.NewBuffer(data)
 	d := gob.NewDecoder(b)
 	err := d.Decode(target)

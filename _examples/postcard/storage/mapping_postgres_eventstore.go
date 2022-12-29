@@ -82,6 +82,25 @@ func NewMappingSQLitePostcardRepository(ctx context.Context, db *sql.DB) (events
 	)
 }
 
+func NewGOBMappingSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventstore.EventStore[postcard.Postcard], error) {
+	return eventstore.NewSQLStore[postcard.Postcard](
+		ctx,
+		db,
+		eventstore.SQLConfig[postcard.Postcard]{
+			SchemaAdapter: eventstore.NewSQLiteSchemaAdapter[postcard.Postcard](),
+			Mapper: transport.NewDefaultMapper[postcard.Postcard](
+				[]transport.Event[postcard.Postcard]{
+					Created{},
+					Addressed{},
+					Written{},
+					Sent{},
+				},
+			),
+			Marshaler: transport.GOBMarshaler{},
+		},
+	)
+}
+
 type Created struct {
 	ID string `json:"id"`
 }

@@ -1,6 +1,7 @@
 package stream_test
 
 import (
+	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -9,18 +10,18 @@ import (
 )
 
 type Stream struct {
-	events *stream.Events[Stream]
+	events *stream.Stream[Stream]
 }
 
 func (s Stream) StreamID() stream.ID {
 	return "ID"
 }
 
-func (s Stream) Events() *stream.Events[Stream] {
+func (s Stream) Stream() *stream.Stream[Stream] {
 	return s.events
 }
 
-func (s Stream) NewFromEvents(events *stream.Events[Stream]) *Stream {
+func (s Stream) NewFromStream(events *stream.Stream[Stream]) *Stream {
 	return &Stream{events: events}
 }
 
@@ -40,7 +41,8 @@ func TestNewEventsQueue(t *testing.T) {
 	var event1 stream.Event[Stream] = Event{ID: 1}
 	var event2 stream.Event[Stream] = Event{ID: 2}
 
-	es := new(stream.Events[Stream])
+	es, err := stream.NewStream[Stream]("ID")
+	require.NoError(t, err)
 	s := Stream{
 		events: es,
 	}
@@ -50,7 +52,7 @@ func TestNewEventsQueue(t *testing.T) {
 	events := es.PopEvents()
 	assert.Len(t, events, 0)
 
-	err := stream.Record(&s, event1)
+	err = stream.Record(&s, event1)
 	assert.NoError(t, err)
 	err = stream.Record(&s, event2)
 	assert.NoError(t, err)

@@ -28,7 +28,7 @@ type schemaAdapter[A any] interface {
 }
 
 // SQLStore is an implementation of the EventStore interface using an SQLStore database.
-type SQLStore[T stream.Stream[T]] struct {
+type SQLStore[T stream.Entity[T]] struct {
 	db     ContextExecutor
 	config SQLConfig[T]
 }
@@ -36,7 +36,7 @@ type SQLStore[T stream.Stream[T]] struct {
 // NewSQLStore creates a new SQL EventStore.
 // The streamType is used to identify the stream type in the database. It should be a constant string and not change.
 // The serializer is used to translate the events to a database-friendly format and back.
-func NewSQLStore[T stream.Stream[T]](
+func NewSQLStore[T stream.Entity[T]](
 	ctx context.Context,
 	db ContextExecutor,
 	config SQLConfig[T],
@@ -126,7 +126,7 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (*T, error) {
 		return nil, ErrStreamNotFound
 	}
 
-	return stream.New(events)
+	return stream.New(id, events)
 }
 
 // Save saves the stream's queued events to the database.
@@ -137,14 +137,14 @@ func (s SQLStore[T]) Save(ctx context.Context, t *T) (err error) {
 
 	stm := *t
 
-	events := stm.Events().PopEvents()
+	events := stm.Stream().PopEvents()
 	if len(events) == 0 {
 		return errors.New("no events to save")
 	}
 
 	serializedEvents := make([]storageEvent[T], len(events))
 	for i, event := range events {
-		mapped, err := s.config.Mapper.ToTransport(stm.StreamID(), event.Event)
+		mapped, err := s.config.Mapper.ToTransport(stm.Stream().ID(), event.Event)
 		if err != nil {
 			return fmt.Errorf("error serializing event: %w", err)
 		}
@@ -156,12 +156,12 @@ func (s SQLStore[T]) Save(ctx context.Context, t *T) (err error) {
 
 		serializedEvents[i] = storageEvent[T]{
 			VersionedEvent: event,
-			streamID:       stm.StreamID().String(),
+			streamID:       stm.Stream().ID().String(),
 			payload:        payload,
 		}
 	}
 
-	stmType := stream.GetStreamType(t)
+	stmType := stm.Stream().Type()
 	query, args, err := s.config.SchemaAdapter.InsertQuery(stmType, serializedEvents)
 	if err != nil {
 		return fmt.Errorf("error building insert query: %w", err)

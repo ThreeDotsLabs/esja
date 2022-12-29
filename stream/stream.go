@@ -1,10 +1,10 @@
 package stream
 
-// Stream represents the type saved and loaded by the event store.
+// Entity represents the type saved and loaded by the event store.
 // In DDD terms, it is the "aggregate root".
 //
-// In order for your domain type to implement Stream:
-//   - Embed pointer to Events queue.
+// In order for your domain type to implement Entity:
+//   - Embed pointer to Stream queue.
 //   - Implement the interface methods in accordance with its description.
 //
 // Then an EventStore will be able to store and load it.
@@ -12,7 +12,7 @@ package stream
 // Example:
 //
 //	type User struct {
-//	    events *stream.Events[User]
+//	    events *stream.Stream[User]
 //	    id string
 //	}
 //
@@ -20,22 +20,19 @@ package stream
 //	    return stream.ID(u.id)
 //	}
 //
-//	func (u User) Events() *stream.Events[User] {
+//	func (u User) Stream() *stream.Stream[User] {
 //	    return u.events
 //	}
 //
-//	func (u User) NewFromEvents(events *stream.Events[User]) *User {
+//	func (u User) NewFromEvents(events *stream.Stream[User]) *User {
 //		return &User{events: events}
 //	}
-type Stream[T any] interface {
-	// StreamID returns a unique identifier (usually the same as your stream's internal ID).
-	StreamID() ID
+type Entity[T any] interface {
+	// Stream exposes a pointer to the Stream queue.
+	Stream() *Stream[T]
 
-	// Events exposes a pointer to the Events queue.
-	Events() *Events[T]
-
-	// NewFromEvents returns a new instance with the provided Events queue.
-	NewFromEvents(events *Events[T]) *T
+	// NewFromEvents returns a new instance with the provided Stream queue.
+	NewFromStream(events *Stream[T]) *T
 }
 
 // ID is the unique identifier of a stream.
@@ -45,32 +42,32 @@ func (i ID) String() string {
 	return string(i)
 }
 
-// Record applies a provided Event and puts that into the stream's internal Events queue.
-func Record[T Stream[T]](stream *T, e Event[T]) error {
+// Record applies a provided Event and puts that into the stream's internal Stream queue.
+func Record[T Entity[T]](stream *T, e Event[T]) error {
 	err := e.ApplyTo(stream)
 	if err != nil {
 		return err
 	}
 
-	(*stream).Events().Record(e)
+	(*stream).Stream().Record(e)
 
 	return nil
 }
 
 // New instantiates a new T with all events applied to it.
-// At the same time the stream's internal Events queue is initialised,
+// At the same time the stream's internal Stream queue is initialised,
 // so it can record new upcoming events.
-func New[T Stream[T]](eventsSlice []VersionedEvent[T]) (*T, error) {
+func New[T Entity[T]](id ID, eventsSlice []VersionedEvent[T]) (*T, error) {
 	var t T
 
-	events, err := newEvents(eventsSlice)
+	events, err := newEvents(id, eventsSlice)
 	if err != nil {
 		return nil, err
 	}
 
 	eventsSlice = events.PopEvents()
 
-	target := t.NewFromEvents(events)
+	target := t.NewFromStream(events)
 	for _, e := range eventsSlice {
 		err := e.ApplyTo(target)
 		if err != nil {

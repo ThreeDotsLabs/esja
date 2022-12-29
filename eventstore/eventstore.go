@@ -9,8 +9,8 @@ import (
 
 var ErrStreamNotFound = errors.New("stream not found by ID")
 
-// EventStore loads and saves T implementing stream.Stream
-type EventStore[T stream.Stream[T]] interface {
+// EventStore loads and saves T implementing stream.Entity
+type EventStore[T stream.Entity[T]] interface {
 	// Load will fetch all events for `StreamID()` and use them
 	// to instantiate a pointer to `T` using `FromEvents()` and return it.
 	Load(ctx context.Context, id stream.ID) (*T, error)

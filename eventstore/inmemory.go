@@ -8,12 +8,12 @@ import (
 	"github.com/ThreeDotsLabs/esja/stream"
 )
 
-type InMemoryStore[T stream.Stream[T]] struct {
+type InMemoryStore[T stream.Entity[T]] struct {
 	lock   sync.RWMutex
 	events map[stream.ID][]stream.VersionedEvent[T]
 }
 
-func NewInMemoryStore[T stream.Stream[T]]() *InMemoryStore[T] {
+func NewInMemoryStore[T stream.Entity[T]]() *InMemoryStore[T] {
 	return &InMemoryStore[T]{
 		lock:   sync.RWMutex{},
 		events: map[stream.ID][]stream.VersionedEvent[T]{},
@@ -29,7 +29,7 @@ func (i *InMemoryStore[T]) Load(_ context.Context, id stream.ID) (*T, error) {
 		return nil, ErrStreamNotFound
 	}
 
-	return stream.New(events)
+	return stream.New(id, events)
 }
 
 func (i *InMemoryStore[T]) Save(_ context.Context, t *T) error {
@@ -42,13 +42,13 @@ func (i *InMemoryStore[T]) Save(_ context.Context, t *T) error {
 
 	stm := *t
 
-	events := stm.Events().PopEvents()
+	events := stm.Stream().PopEvents()
 	if len(events) == 0 {
 		return errors.New("no events to save")
 	}
 
-	if priorEvents, ok := i.events[stm.StreamID()]; !ok {
-		i.events[stm.StreamID()] = events
+	if priorEvents, ok := i.events[stm.Stream().ID()]; !ok {
+		i.events[stm.Stream().ID()] = events
 	} else {
 		for _, event := range events {
 			if len(priorEvents) > 0 {
@@ -56,7 +56,7 @@ func (i *InMemoryStore[T]) Save(_ context.Context, t *T) error {
 					return errors.New("stream version duplicate")
 				}
 			}
-			i.events[stm.StreamID()] = append(i.events[stm.StreamID()], event)
+			i.events[stm.Stream().ID()] = append(i.events[stm.Stream().ID()], event)
 		}
 	}
 

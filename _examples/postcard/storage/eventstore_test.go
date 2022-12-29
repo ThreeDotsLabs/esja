@@ -156,7 +156,7 @@ func TestPostcard_Repositories(t *testing.T) {
 			assert.Equal(t, pc.ID(), fromRepo2.ID())
 			assert.Equal(t, pc.Addressee(), fromRepo2.Addressee())
 			assert.Equal(t, pc.Sender(), fromRepo2.Sender())
-			assert.Empty(t, fromRepo2.Events().PopEvents())
+			assert.Empty(t, fromRepo2.Stream().PopEvents())
 
 			err = fromRepo2.Write("content")
 			require.NoError(t, err)
@@ -182,7 +182,7 @@ func TestPostcard_Repositories(t *testing.T) {
 			assert.Equal(t, addresseeAddress, fromRepo3.Addressee())
 			assert.Equal(t, "content", fromRepo3.Content())
 			assert.True(t, fromRepo3.Sent())
-			assert.Empty(t, fromRepo3.Events().PopEvents())
+			assert.Empty(t, fromRepo3.Stream().PopEvents())
 		})
 	}
 }

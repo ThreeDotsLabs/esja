@@ -7,6 +7,7 @@ import (
 	"github.com/ThreeDotsLabs/esja/eventstore"
 	"github.com/ThreeDotsLabs/esja/stream"
 	"github.com/ThreeDotsLabs/esja/transport"
+	"github.com/ThreeDotsLabs/pii"
 
 	"postcard"
 )
@@ -51,7 +52,7 @@ func NewMappingAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (e
 		db,
 		eventstore.SQLConfig[postcard.Postcard]{
 			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard](),
-			Mapper: transport.NewAESAnonymizer[postcard.Postcard](
+			Mapper: transport.NewAnonymizer[postcard.Postcard](
 				transport.NewDefaultMapper[postcard.Postcard](
 					[]transport.Event[postcard.Postcard]{
 						&Created{},
@@ -60,7 +61,9 @@ func NewMappingAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (e
 						&Sent{},
 					},
 				),
-				ConstantSecretProvider{},
+				pii.NewStructAnonymizer[stream.ID, any](
+					pii.NewAESAnonymizer[stream.ID](ConstantSecretProvider{}),
+				),
 			),
 			Marshaler: transport.JSONMarshaler{},
 		},

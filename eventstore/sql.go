@@ -126,7 +126,7 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (*T, error) {
 		return nil, ErrStreamNotFound
 	}
 
-	return stream.New(id, events)
+	return stream.NewEntity(id, events)
 }
 
 // Save saves the stream's queued events to the database.

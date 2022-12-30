@@ -29,7 +29,7 @@ func (i *InMemoryStore[T]) Load(_ context.Context, id stream.ID) (*T, error) {
 		return nil, ErrStreamNotFound
 	}
 
-	return stream.New(id, events)
+	return stream.NewEntity(id, events)
 }
 
 func (i *InMemoryStore[T]) Save(_ context.Context, t *T) error {

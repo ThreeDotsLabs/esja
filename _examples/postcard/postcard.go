@@ -24,7 +24,7 @@ type Address struct {
 }
 
 func NewPostcard(id string) (*Postcard, error) {
-	s, err := stream.NewStream[Postcard](stream.ID(id))
+	s, err := stream.NewStreamWithType[Postcard](stream.ID(id), "Postcard")
 	if err != nil {
 		return nil, err
 	}
@@ -33,8 +33,7 @@ func NewPostcard(id string) (*Postcard, error) {
 		stream: s,
 	}
 
-	// Can we make it s.Record(p, Created{) ?
-	err = stream.Record[Postcard](p, Created{
+	err = p.stream.Record(p, Created{
 		ID: id,
 	})
 	if err != nil {
@@ -49,14 +48,14 @@ func (p *Postcard) Send() error {
 		return fmt.Errorf("postcard already sent")
 	}
 
-	return stream.Record[Postcard](p, Sent{})
+	return p.stream.Record(p, Sent{})
 }
 
 func (p Postcard) Stream() *stream.Stream[Postcard] {
 	return p.stream
 }
 
-func (p Postcard) NewFromStream(stream *stream.Stream[Postcard]) *Postcard {
+func (p Postcard) NewWithStream(stream *stream.Stream[Postcard]) *Postcard {
 	return &Postcard{stream: stream}
 }
 
@@ -81,13 +80,13 @@ func (p Postcard) Sent() bool {
 }
 
 func (p *Postcard) Write(content string) error {
-	return stream.Record[Postcard](p, Written{
+	return p.stream.Record(p, Written{
 		Content: content,
 	})
 }
 
 func (p *Postcard) Address(sender Address, addressee Address) error {
-	return stream.Record[Postcard](p, Addressed{
+	return p.stream.Record(p, Addressed{
 		Sender:    sender,
 		Addressee: addressee,
 	})

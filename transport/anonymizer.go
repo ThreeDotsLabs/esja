@@ -2,35 +2,43 @@ package transport
 
 import (
 	"github.com/ThreeDotsLabs/esja/stream"
-	"github.com/ThreeDotsLabs/pii"
 )
 
-// AESAnonymizer is a wrapper to any transport.Mapper instance.
-// AESAnonymizer will anonymize transport model properties
-// if those were tagged with `anonymize:true` tag.
-type AESAnonymizer[T any] struct {
-	mapper     Mapper[T]
-	anonymizer pii.StructAnonymizer[stream.ID, any]
+// StructAnonymizer is an interface of the anonymizer component.
+type StructAnonymizer interface {
+	// Anonymize encrypts struct properties using secrets
+	// correlated with a provided stream.ID.
+	Anonymize(key stream.ID, data any) (any, error)
+
+	// Deanonymize decrypts struct properties using secrets
+	// correlated with a provided stream.ID.
+	Deanonymize(key stream.ID, data any) (any, error)
 }
 
-// NewAESAnonymizer returns a new instance of AESAnonymizer.
-func NewAESAnonymizer[T any](
+// Anonymizer is a wrapper to any transport.Mapper instance.
+// Anonymizer will anonymize transport model properties
+// using provided StructAnonymizer implementation.
+type Anonymizer[T any] struct {
+	mapper     Mapper[T]
+	anonymizer StructAnonymizer
+}
+
+// NewAnonymizer returns a new instance of Anonymizer.
+func NewAnonymizer[T any](
 	mapper Mapper[T],
-	secretProvider pii.SecretProvider[stream.ID],
-) *AESAnonymizer[T] {
-	return &AESAnonymizer[T]{
-		mapper: mapper,
-		anonymizer: pii.NewStructAnonymizer[stream.ID, any](
-			pii.NewAESAnonymizer[stream.ID](secretProvider),
-		),
+	anonymizer StructAnonymizer,
+) *Anonymizer[T] {
+	return &Anonymizer[T]{
+		mapper:     mapper,
+		anonymizer: anonymizer,
 	}
 }
 
-func (a *AESAnonymizer[T]) New(name stream.EventName) (any, error) {
+func (a *Anonymizer[T]) New(name stream.EventName) (any, error) {
 	return a.mapper.New(name)
 }
 
-func (a *AESAnonymizer[T]) FromTransport(
+func (a *Anonymizer[T]) FromTransport(
 	streamID stream.ID,
 	payload any,
 ) (stream.Event[T], error) {
@@ -47,7 +55,7 @@ func (a *AESAnonymizer[T]) FromTransport(
 	return event, nil
 }
 
-func (a *AESAnonymizer[T]) ToTransport(
+func (a *Anonymizer[T]) ToTransport(
 	streamID stream.ID,
 	event stream.Event[T],
 ) (any, error) {

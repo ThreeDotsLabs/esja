@@ -34,7 +34,7 @@ func NewAnonymizer[T any](
 	}
 }
 
-func (a *Anonymizer[T]) New(name stream.EventName) (any, error) {
+func (a *Anonymizer[T]) New(name string) (any, error) {
 	return a.mapper.New(name)
 }
 

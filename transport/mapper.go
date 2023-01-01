@@ -5,8 +5,8 @@ import "github.com/ThreeDotsLabs/esja/stream"
 // Mapper translates the event into a serializable transport model.
 type Mapper[T any] interface {
 	// New returns an instance of a transport model
-	// corresponding to provided stream.EventName.
-	New(stream.EventName) (any, error)
+	// corresponding to provided event name.
+	New(string) (any, error)
 
 	// FromTransport maps corresponding transport model
 	// into an instance of a stream.Event.

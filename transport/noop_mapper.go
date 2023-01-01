@@ -10,14 +10,14 @@ import (
 // NoOpMapper implements an interface of transport.Mapper
 // The mapper will use provided original stream events as transport models.
 type NoOpMapper[T any] struct {
-	supported map[stream.EventName]stream.Event[T]
+	supported map[string]stream.Event[T]
 }
 
 // NewNoOpMapper returns a new instance of NoOpMapper.
 func NewNoOpMapper[T any](
 	supportedEvents []stream.Event[T],
 ) NoOpMapper[T] {
-	supported := make(map[stream.EventName]stream.Event[T])
+	supported := make(map[string]stream.Event[T])
 	for _, e := range supportedEvents {
 		supported[e.EventName()] = e
 	}
@@ -27,7 +27,7 @@ func NewNoOpMapper[T any](
 	}
 }
 
-func (m NoOpMapper[T]) New(name stream.EventName) (any, error) {
+func (m NoOpMapper[T]) New(name string) (any, error) {
 	e, ok := m.supported[name]
 	if !ok {
 		return nil, fmt.Errorf("unsupported event of name '%s'", name)

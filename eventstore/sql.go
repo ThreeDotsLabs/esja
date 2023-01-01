@@ -91,7 +91,7 @@ func (s SQLStore[T]) Load(ctx context.Context, id string) (*T, error) {
 	var (
 		streamID      string
 		streamVersion int
-		eventName     stream.EventName
+		eventName     string
 		eventPayload  []byte
 		events        []stream.VersionedEvent[T]
 	)

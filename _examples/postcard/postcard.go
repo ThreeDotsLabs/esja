@@ -25,7 +25,7 @@ type Address struct {
 }
 
 func NewPostcard(id string) (*Postcard, error) {
-	s, err := stream.NewStreamWithType[Postcard](stream.ID(id), "Postcard")
+	s, err := stream.NewStreamWithType[Postcard](id, "Postcard")
 	if err != nil {
 		return nil, err
 	}

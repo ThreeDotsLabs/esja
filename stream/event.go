@@ -1,16 +1,13 @@
 package stream
 
-// EventName identifies the type of the event and the version of its schema, e.g. "FooCreated_v1".
-type EventName string
-
 type Event[T any] interface {
 	// EventName should identify the event and the version of its schema.
 	//
 	// Example implementation:
-	// 	func (e FooCreated) EventName() EventName {
+	// 	func (e FooCreated) EventName() string {
 	// 		return "FooCreated_v1"
 	// 	}
-	EventName() EventName
+	EventName() string
 
 	// ApplyTo applies the event to the stream.
 	ApplyTo(*T) error

@@ -25,7 +25,7 @@ type Event struct {
 	ID int
 }
 
-func (e Event) EventName() stream.EventName {
+func (e Event) EventName() string {
 	return "Event"
 }
 

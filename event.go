@@ -1,4 +1,4 @@
-package stream
+package esja
 
 type Event[T any] interface {
 	// EventName should identify the event and the version of its schema.

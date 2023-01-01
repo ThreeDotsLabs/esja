@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 
-	"github.com/ThreeDotsLabs/esja/stream"
+	"github.com/ThreeDotsLabs/esja"
 )
 
 var ErrEntityNotFound = errors.New("entity not found by ID")
 
 // EventStore loads and saves T implementing stream.Entity.
-type EventStore[T stream.Entity[T]] interface {
+type EventStore[T esja.Entity[T]] interface {
 	// Load fetches all events for the ID and returns a new instance of T based on them.
 	Load(ctx context.Context, id string) (*T, error)
 

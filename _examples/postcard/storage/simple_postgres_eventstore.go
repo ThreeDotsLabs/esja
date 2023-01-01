@@ -6,8 +6,8 @@ import (
 	"encoding/hex"
 	"strings"
 
+	"github.com/ThreeDotsLabs/esja"
 	"github.com/ThreeDotsLabs/esja/eventstore"
-	"github.com/ThreeDotsLabs/esja/stream"
 	"github.com/ThreeDotsLabs/esja/transport"
 	"github.com/ThreeDotsLabs/pii"
 
@@ -19,7 +19,7 @@ func NewDefaultSimplePostcardRepository(ctx context.Context, db *sql.DB) (events
 		ctx,
 		db,
 		eventstore.NewPostgresSQLConfig[postcard.Postcard](
-			[]stream.Event[postcard.Postcard]{
+			[]esja.Event[postcard.Postcard]{
 				postcard.Created{},
 				postcard.Addressed{},
 				postcard.Written{},
@@ -36,7 +36,7 @@ func NewCustomSimplePostcardRepository(ctx context.Context, db *sql.DB) (eventst
 		eventstore.SQLConfig[postcard.Postcard]{
 			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard](),
 			Mapper: transport.NewNoOpMapper(
-				[]stream.Event[postcard.Postcard]{
+				[]esja.Event[postcard.Postcard]{
 					postcard.Created{},
 					postcard.Addressed{},
 					postcard.Written{},
@@ -56,7 +56,7 @@ func NewSimpleAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (ev
 			SchemaAdapter: eventstore.NewPostgresSchemaAdapter[postcard.Postcard](),
 			Mapper: transport.NewAnonymizer[postcard.Postcard](
 				transport.NewNoOpMapper[postcard.Postcard](
-					[]stream.Event[postcard.Postcard]{
+					[]esja.Event[postcard.Postcard]{
 						postcard.Created{},
 						postcard.Addressed{},
 						postcard.Written{},
@@ -77,7 +77,7 @@ func NewSimpleSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventst
 		ctx,
 		db,
 		eventstore.NewSQLiteConfig[postcard.Postcard](
-			[]stream.Event[postcard.Postcard]{
+			[]esja.Event[postcard.Postcard]{
 				postcard.Created{},
 				postcard.Addressed{},
 				postcard.Written{},
@@ -94,7 +94,7 @@ func NewGOBSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventstore
 		eventstore.SQLConfig[postcard.Postcard]{
 			SchemaAdapter: eventstore.NewSQLiteSchemaAdapter[postcard.Postcard](),
 			Mapper: transport.NewNoOpMapper[postcard.Postcard](
-				[]stream.Event[postcard.Postcard]{
+				[]esja.Event[postcard.Postcard]{
 					postcard.Created{},
 					postcard.Addressed{},
 					postcard.Written{},

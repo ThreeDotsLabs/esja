@@ -4,8 +4,8 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/ThreeDotsLabs/esja"
 	"github.com/ThreeDotsLabs/esja/eventstore"
-	"github.com/ThreeDotsLabs/esja/stream"
 	"github.com/ThreeDotsLabs/esja/transport"
 	"github.com/ThreeDotsLabs/pii"
 
@@ -108,12 +108,12 @@ type Created struct {
 	ID string `json:"id"`
 }
 
-func (e *Created) FromStreamEvent(event stream.Event[postcard.Postcard]) {
+func (e *Created) FromStreamEvent(event esja.Event[postcard.Postcard]) {
 	created := event.(postcard.Created)
 	e.ID = created.ID
 }
 
-func (e *Created) ToStreamEvent() stream.Event[postcard.Postcard] {
+func (e *Created) ToStreamEvent() esja.Event[postcard.Postcard] {
 	return postcard.Created{
 		ID: e.ID,
 	}
@@ -124,13 +124,13 @@ type Addressed struct {
 	Addressee Address `json:"addressee"`
 }
 
-func (e *Addressed) FromStreamEvent(event stream.Event[postcard.Postcard]) {
+func (e *Addressed) FromStreamEvent(event esja.Event[postcard.Postcard]) {
 	addressed := event.(postcard.Addressed)
 	e.Sender = Address(addressed.Sender)
 	e.Addressee = Address(addressed.Addressee)
 }
 
-func (e *Addressed) ToStreamEvent() stream.Event[postcard.Postcard] {
+func (e *Addressed) ToStreamEvent() esja.Event[postcard.Postcard] {
 	return postcard.Addressed{
 		Sender:    postcard.Address(e.Sender),
 		Addressee: postcard.Address(e.Addressee),
@@ -148,12 +148,12 @@ type Written struct {
 	Content string `json:"content"`
 }
 
-func (e *Written) FromStreamEvent(event stream.Event[postcard.Postcard]) {
+func (e *Written) FromStreamEvent(event esja.Event[postcard.Postcard]) {
 	written := event.(postcard.Written)
 	e.Content = written.Content
 }
 
-func (e *Written) ToStreamEvent() stream.Event[postcard.Postcard] {
+func (e *Written) ToStreamEvent() esja.Event[postcard.Postcard] {
 	return postcard.Written{
 		Content: e.Content,
 	}
@@ -161,8 +161,8 @@ func (e *Written) ToStreamEvent() stream.Event[postcard.Postcard] {
 
 type Sent struct{}
 
-func (e *Sent) FromStreamEvent(_ stream.Event[postcard.Postcard]) {}
+func (e *Sent) FromStreamEvent(_ esja.Event[postcard.Postcard]) {}
 
-func (e *Sent) ToStreamEvent() stream.Event[postcard.Postcard] {
+func (e *Sent) ToStreamEvent() esja.Event[postcard.Postcard] {
 	return postcard.Sent{}
 }

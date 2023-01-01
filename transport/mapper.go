@@ -1,6 +1,8 @@
 package transport
 
-import "github.com/ThreeDotsLabs/esja/stream"
+import (
+	"github.com/ThreeDotsLabs/esja"
+)
 
 // Mapper translates the event into a serializable transport model.
 type Mapper[T any] interface {
@@ -13,12 +15,12 @@ type Mapper[T any] interface {
 	FromTransport(
 		string,
 		any,
-	) (stream.Event[T], error)
+	) (esja.Event[T], error)
 
 	// ToTransport maps a stream.Event into an instance of
 	// a corresponding transport model.
 	ToTransport(
 		string,
-		stream.Event[T],
+		esja.Event[T],
 	) (any, error)
 }

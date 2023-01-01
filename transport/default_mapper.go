@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/ThreeDotsLabs/esja/stream"
+	"github.com/ThreeDotsLabs/esja"
 )
 
 // Event is a transport model which defines which stream model
 // it corresponds to and implements the mapping from- and to- the stream model.
 type Event[T any] interface {
-	FromStreamEvent(event stream.Event[T])
-	ToStreamEvent() stream.Event[T]
+	FromStreamEvent(event esja.Event[T])
+	ToStreamEvent() esja.Event[T]
 }
 
 // DefaultMapper implements an interface of transport.Mapper
@@ -46,7 +46,7 @@ func (m DefaultMapper[T]) New(name string) (any, error) {
 
 func (m DefaultMapper[T]) ToTransport(
 	_ string,
-	event stream.Event[T],
+	event esja.Event[T],
 ) (any, error) {
 	e, err := m.eventForEventName(event.EventName())
 	if err != nil {
@@ -62,7 +62,7 @@ func (m DefaultMapper[T]) ToTransport(
 func (m DefaultMapper[T]) FromTransport(
 	_ string,
 	i any,
-) (stream.Event[T], error) {
+) (esja.Event[T], error) {
 	e, ok := i.(Event[T])
 	if !ok {
 		return nil, fmt.Errorf("payload does not implement the Event[T] interface")

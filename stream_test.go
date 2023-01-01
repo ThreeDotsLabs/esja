@@ -1,23 +1,22 @@
-package stream_test
+package esja_test
 
 import (
 	"testing"
 
+	"github.com/ThreeDotsLabs/esja"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/ThreeDotsLabs/esja/stream"
 )
 
 type Entity struct {
-	stream *stream.Stream[Entity]
+	stream *esja.Stream[Entity]
 }
 
-func (s Entity) Stream() *stream.Stream[Entity] {
+func (s Entity) Stream() *esja.Stream[Entity] {
 	return s.stream
 }
 
-func (s Entity) NewWithStream(stream *stream.Stream[Entity]) *Entity {
+func (s Entity) NewWithStream(stream *esja.Stream[Entity]) *Entity {
 	return &Entity{stream: stream}
 }
 
@@ -34,10 +33,10 @@ func (e Event) ApplyTo(_ *Entity) error {
 }
 
 func TestNewStream(t *testing.T) {
-	var event1 stream.Event[Entity] = Event{ID: 1}
-	var event2 stream.Event[Entity] = Event{ID: 2}
+	var event1 esja.Event[Entity] = Event{ID: 1}
+	var event2 esja.Event[Entity] = Event{ID: 2}
 
-	stm, err := stream.NewStreamWithType[Entity]("ID", "Stream")
+	stm, err := esja.NewStreamWithType[Entity]("ID", "Stream")
 	require.NoError(t, err)
 	assert.Equal(t, "ID", stm.ID())
 	assert.Equal(t, "Stream", stm.Type())
@@ -71,7 +70,7 @@ func TestNewStream(t *testing.T) {
 	events = stm.PopEvents()
 	assert.Len(t, events, 0)
 
-	var event3 stream.Event[Entity] = Event{ID: 3}
+	var event3 esja.Event[Entity] = Event{ID: 3}
 
 	err = stm.Record(entity, event3)
 	assert.NoError(t, err)

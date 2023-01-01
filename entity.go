@@ -1,4 +1,4 @@
-package stream
+package esja
 
 // Entity represents the event-sourced type saved and loaded by the event store.
 // In DDD terms, it is the "aggregate root".

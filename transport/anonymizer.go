@@ -1,7 +1,7 @@
 package transport
 
 import (
-	"github.com/ThreeDotsLabs/esja/stream"
+	"github.com/ThreeDotsLabs/esja"
 )
 
 // StructAnonymizer is an interface of the anonymizer component.
@@ -41,7 +41,7 @@ func (a *Anonymizer[T]) New(name string) (any, error) {
 func (a *Anonymizer[T]) FromTransport(
 	streamID string,
 	payload any,
-) (stream.Event[T], error) {
+) (esja.Event[T], error) {
 	payload, err := a.anonymizer.Deanonymize(streamID, payload)
 	if err != nil {
 		return nil, err
@@ -57,7 +57,7 @@ func (a *Anonymizer[T]) FromTransport(
 
 func (a *Anonymizer[T]) ToTransport(
 	streamID string,
-	event stream.Event[T],
+	event esja.Event[T],
 ) (any, error) {
 	e, err := a.mapper.ToTransport(streamID, event)
 	if err != nil {

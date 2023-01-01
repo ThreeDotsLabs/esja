@@ -5,18 +5,18 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/ThreeDotsLabs/esja/stream"
+	"github.com/ThreeDotsLabs/esja"
 )
 
-type InMemoryStore[T stream.Entity[T]] struct {
+type InMemoryStore[T esja.Entity[T]] struct {
 	lock   sync.RWMutex
-	events map[string][]stream.VersionedEvent[T]
+	events map[string][]esja.VersionedEvent[T]
 }
 
-func NewInMemoryStore[T stream.Entity[T]]() *InMemoryStore[T] {
+func NewInMemoryStore[T esja.Entity[T]]() *InMemoryStore[T] {
 	return &InMemoryStore[T]{
 		lock:   sync.RWMutex{},
-		events: map[string][]stream.VersionedEvent[T]{},
+		events: map[string][]esja.VersionedEvent[T]{},
 	}
 }
 
@@ -29,7 +29,7 @@ func (i *InMemoryStore[T]) Load(_ context.Context, id string) (*T, error) {
 		return nil, ErrEntityNotFound
 	}
 
-	return stream.NewEntity(id, events)
+	return esja.NewEntity(id, events)
 }
 
 func (i *InMemoryStore[T]) Save(_ context.Context, t *T) error {

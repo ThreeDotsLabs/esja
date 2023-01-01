@@ -4,20 +4,20 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/ThreeDotsLabs/esja/stream"
+	"github.com/ThreeDotsLabs/esja"
 )
 
 // NoOpMapper implements an interface of transport.Mapper
 // The mapper will use provided original stream events as transport models.
 type NoOpMapper[T any] struct {
-	supported map[string]stream.Event[T]
+	supported map[string]esja.Event[T]
 }
 
 // NewNoOpMapper returns a new instance of NoOpMapper.
 func NewNoOpMapper[T any](
-	supportedEvents []stream.Event[T],
+	supportedEvents []esja.Event[T],
 ) NoOpMapper[T] {
-	supported := make(map[string]stream.Event[T])
+	supported := make(map[string]esja.Event[T])
 	for _, e := range supportedEvents {
 		supported[e.EventName()] = e
 	}
@@ -38,7 +38,7 @@ func (m NoOpMapper[T]) New(name string) (any, error) {
 
 func (m NoOpMapper[T]) ToTransport(
 	_ string,
-	event stream.Event[T],
+	event esja.Event[T],
 ) (any, error) {
 	return event, nil
 }
@@ -46,8 +46,8 @@ func (m NoOpMapper[T]) ToTransport(
 func (m NoOpMapper[T]) FromTransport(
 	_ string,
 	payload any,
-) (stream.Event[T], error) {
-	event, ok := payload.(stream.Event[T])
+) (esja.Event[T], error) {
+	event, ok := payload.(esja.Event[T])
 	if !ok {
 		return nil, fmt.Errorf("payload does not implement the stream.Event[T] interface")
 	}

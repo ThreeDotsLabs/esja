@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ThreeDotsLabs/esja/stream"
+	"github.com/ThreeDotsLabs/esja"
 )
 
 // ContextExecutor can perform SQL queries with context.
@@ -16,7 +16,7 @@ type ContextExecutor interface {
 }
 
 type storageEvent[A any] struct {
-	stream.VersionedEvent[A]
+	esja.VersionedEvent[A]
 	streamID string
 	payload  []byte
 }
@@ -28,13 +28,13 @@ type schemaAdapter[A any] interface {
 }
 
 // SQLStore is an implementation of the EventStore interface using an SQLStore database.
-type SQLStore[T stream.Entity[T]] struct {
+type SQLStore[T esja.Entity[T]] struct {
 	db     ContextExecutor
 	config SQLConfig[T]
 }
 
 // NewSQLStore creates a new SQL EventStore.
-func NewSQLStore[T stream.Entity[T]](
+func NewSQLStore[T esja.Entity[T]](
 	ctx context.Context,
 	db ContextExecutor,
 	config SQLConfig[T],
@@ -91,7 +91,7 @@ func (s SQLStore[T]) Load(ctx context.Context, id string) (*T, error) {
 		streamVersion int
 		eventName     string
 		eventPayload  []byte
-		events        []stream.VersionedEvent[T]
+		events        []esja.VersionedEvent[T]
 	)
 	for results.Next() {
 		err = results.Scan(&streamID, &streamVersion, &eventName, &eventPayload)
@@ -114,7 +114,7 @@ func (s SQLStore[T]) Load(ctx context.Context, id string) (*T, error) {
 			return nil, fmt.Errorf("error deserializing event: %w", err)
 		}
 
-		events = append(events, stream.VersionedEvent[T]{
+		events = append(events, esja.VersionedEvent[T]{
 			Event:         mappedEvent,
 			StreamVersion: streamVersion,
 		})
@@ -124,7 +124,7 @@ func (s SQLStore[T]) Load(ctx context.Context, id string) (*T, error) {
 		return nil, ErrEntityNotFound
 	}
 
-	return stream.NewEntity(id, events)
+	return esja.NewEntity(id, events)
 }
 
 // Save saves the entity's queued events to the database.

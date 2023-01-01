@@ -7,12 +7,12 @@ import (
 // StructAnonymizer is an interface of the anonymizer component.
 type StructAnonymizer interface {
 	// Anonymize encrypts struct properties using secrets
-	// correlated with a provided stream.ID.
-	Anonymize(key stream.ID, data any) (any, error)
+	// correlated with a provided stream ID.
+	Anonymize(key string, data any) (any, error)
 
 	// Deanonymize decrypts struct properties using secrets
-	// correlated with a provided stream.ID.
-	Deanonymize(key stream.ID, data any) (any, error)
+	// correlated with a provided stream ID.
+	Deanonymize(key string, data any) (any, error)
 }
 
 // Anonymizer is a wrapper to any transport.Mapper instance.
@@ -39,7 +39,7 @@ func (a *Anonymizer[T]) New(name stream.EventName) (any, error) {
 }
 
 func (a *Anonymizer[T]) FromTransport(
-	streamID stream.ID,
+	streamID string,
 	payload any,
 ) (stream.Event[T], error) {
 	payload, err := a.anonymizer.Deanonymize(streamID, payload)
@@ -56,7 +56,7 @@ func (a *Anonymizer[T]) FromTransport(
 }
 
 func (a *Anonymizer[T]) ToTransport(
-	streamID stream.ID,
+	streamID string,
 	event stream.Event[T],
 ) (any, error) {
 	e, err := a.mapper.ToTransport(streamID, event)

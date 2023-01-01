@@ -10,23 +10,23 @@ import (
 
 type InMemoryStore[T stream.Entity[T]] struct {
 	lock   sync.RWMutex
-	events map[stream.ID][]stream.VersionedEvent[T]
+	events map[string][]stream.VersionedEvent[T]
 }
 
 func NewInMemoryStore[T stream.Entity[T]]() *InMemoryStore[T] {
 	return &InMemoryStore[T]{
 		lock:   sync.RWMutex{},
-		events: map[stream.ID][]stream.VersionedEvent[T]{},
+		events: map[string][]stream.VersionedEvent[T]{},
 	}
 }
 
-func (i *InMemoryStore[T]) Load(_ context.Context, id stream.ID) (*T, error) {
+func (i *InMemoryStore[T]) Load(_ context.Context, id string) (*T, error) {
 	i.lock.RLock()
 	defer i.lock.RUnlock()
 
 	events, ok := i.events[id]
 	if !ok {
-		return nil, ErrStreamNotFound
+		return nil, ErrEntityNotFound
 	}
 
 	return stream.NewEntity(id, events)

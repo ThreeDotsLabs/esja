@@ -63,8 +63,8 @@ func NewSimpleAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (ev
 						postcard.Sent{},
 					},
 				),
-				pii.NewStructAnonymizer[stream.ID, any](
-					pii.NewAESAnonymizer[stream.ID](ConstantSecretProvider{}),
+				pii.NewStructAnonymizer[string, any](
+					pii.NewAESAnonymizer[string](ConstantSecretProvider{}),
 				),
 			),
 			Marshaler: transport.JSONMarshaler{},
@@ -108,8 +108,8 @@ func NewGOBSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventstore
 
 type ConstantSecretProvider struct{}
 
-func (c ConstantSecretProvider) SecretForKey(streamID stream.ID) ([]byte, error) {
-	h, err := hex.DecodeString(strings.ReplaceAll(streamID.String(), "-", ""))
+func (c ConstantSecretProvider) SecretForKey(id string) ([]byte, error) {
+	h, err := hex.DecodeString(strings.ReplaceAll(id, "-", ""))
 	if err != nil {
 		return nil, err
 	}

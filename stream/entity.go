@@ -31,17 +31,10 @@ type Entity[T any] interface {
 	NewWithStream(*Stream[T]) *T
 }
 
-// ID is the unique identifier of a stream.
-type ID string
-
-func (i ID) String() string {
-	return string(i)
-}
-
 // NewEntity instantiates a new T with the given events applied to it.
 // At the same time the entity's internal Stream is initialised,
 // so it can record new upcoming stream.
-func NewEntity[T Entity[T]](id ID, eventsSlice []VersionedEvent[T]) (*T, error) {
+func NewEntity[T Entity[T]](id string, eventsSlice []VersionedEvent[T]) (*T, error) {
 	var t T
 
 	stream, err := newStream(id, eventsSlice)

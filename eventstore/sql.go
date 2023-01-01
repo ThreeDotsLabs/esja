@@ -73,8 +73,8 @@ func (s SQLStore[T]) initializeSchema(ctx context.Context) error {
 }
 
 // Load loads the stream from the database events.
-func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (*T, error) {
-	query, args, err := s.config.SchemaAdapter.SelectQuery(id.String())
+func (s SQLStore[T]) Load(ctx context.Context, id string) (*T, error) {
+	query, args, err := s.config.SchemaAdapter.SelectQuery(id)
 	if err != nil {
 		return nil, fmt.Errorf("error building select query: %w", err)
 	}
@@ -89,7 +89,7 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (*T, error) {
 	}()
 
 	var (
-		streamID      stream.ID
+		streamID      string
 		streamVersion int
 		eventName     stream.EventName
 		eventPayload  []byte
@@ -123,7 +123,7 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (*T, error) {
 	}
 
 	if len(events) == 0 {
-		return nil, ErrStreamNotFound
+		return nil, ErrEntityNotFound
 	}
 
 	return stream.NewEntity(id, events)
@@ -156,7 +156,7 @@ func (s SQLStore[T]) Save(ctx context.Context, t *T) (err error) {
 
 		serializedEvents[i] = storageEvent[T]{
 			VersionedEvent: event,
-			streamID:       stm.Stream().ID().String(),
+			streamID:       stm.Stream().ID(),
 			payload:        payload,
 		}
 	}

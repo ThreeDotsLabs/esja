@@ -37,14 +37,14 @@ func (m NoOpMapper[T]) New(name stream.EventName) (any, error) {
 }
 
 func (m NoOpMapper[T]) ToTransport(
-	_ stream.ID,
+	_ string,
 	event stream.Event[T],
 ) (any, error) {
 	return event, nil
 }
 
 func (m NoOpMapper[T]) FromTransport(
-	_ stream.ID,
+	_ string,
 	payload any,
 ) (stream.Event[T], error) {
 	event, ok := payload.(stream.Event[T])

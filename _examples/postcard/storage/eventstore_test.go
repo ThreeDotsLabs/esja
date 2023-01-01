@@ -14,8 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/ThreeDotsLabs/esja/eventstore"
-	"github.com/ThreeDotsLabs/esja/stream"
-
 	"postcard"
 	"postcard/storage"
 )
@@ -141,16 +139,16 @@ func TestPostcard_Repositories(t *testing.T) {
 			err = pc.Address(senderAddress, addresseeAddress)
 			require.NoError(t, err)
 
-			_, err = tc.repository.Load(ctx, stream.ID(id))
-			assert.ErrorIs(t, err, eventstore.ErrStreamNotFound, "expected stream not found yet")
+			_, err = tc.repository.Load(ctx, id)
+			assert.ErrorIs(t, err, eventstore.ErrEntityNotFound, "expected stream not found yet")
 
 			err = tc.repository.Save(ctx, pc)
 			require.NoError(t, err, "should save the stream and it has some events already")
 
-			fromRepo2, err := tc.repository.Load(ctx, stream.ID(id))
+			fromRepo2, err := tc.repository.Load(ctx, id)
 			assert.NoError(t, err, "should retrieve the stream, some events should have been saved")
 
-			fromRepo2Duplicate, err := tc.repository.Load(ctx, stream.ID(id))
+			fromRepo2Duplicate, err := tc.repository.Load(ctx, id)
 			assert.NoError(t, err)
 
 			assert.Equal(t, pc.ID(), fromRepo2.ID())
@@ -174,7 +172,7 @@ func TestPostcard_Repositories(t *testing.T) {
 			err = tc.repository.Save(ctx, fromRepo2Duplicate)
 			require.Error(t, err, "should fail to save the same stream version")
 
-			fromRepo3, err := tc.repository.Load(ctx, stream.ID(id))
+			fromRepo3, err := tc.repository.Load(ctx, id)
 			assert.NoError(t, err)
 
 			assert.Equal(t, id, fromRepo3.ID())

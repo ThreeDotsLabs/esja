@@ -8,13 +8,13 @@ import (
 // Stream stores stream.
 // Zero-value is a valid state, ready to use.
 type Stream[T any] struct {
-	id         ID
+	id         string
 	streamType string
 	version    int
 	queue      []VersionedEvent[T]
 }
 
-func NewStream[T any](id ID) (*Stream[T], error) {
+func NewStream[T any](id string) (*Stream[T], error) {
 	if id == "" {
 		return nil, errors.New("empty id")
 	}
@@ -24,7 +24,7 @@ func NewStream[T any](id ID) (*Stream[T], error) {
 	}, nil
 }
 
-func NewStreamWithType[T any](id ID, streamType string) (*Stream[T], error) {
+func NewStreamWithType[T any](id string, streamType string) (*Stream[T], error) {
 	s, err := NewStream[T](id)
 	if err != nil {
 		return nil, err
@@ -35,7 +35,7 @@ func NewStreamWithType[T any](id ID, streamType string) (*Stream[T], error) {
 	return s, nil
 }
 
-func (s *Stream[T]) ID() ID {
+func (s *Stream[T]) ID() string {
 	return s.id
 }
 
@@ -73,7 +73,7 @@ func (s *Stream[T]) HasEvents() bool {
 	return len(s.queue) > 0
 }
 
-func newStream[T any](id ID, events []VersionedEvent[T]) (*Stream[T], error) {
+func newStream[T any](id string, events []VersionedEvent[T]) (*Stream[T], error) {
 	if len(events) == 0 {
 		return nil, fmt.Errorf("no stream to load")
 	}

@@ -45,7 +45,7 @@ func (m DefaultMapper[T]) New(name stream.EventName) (any, error) {
 }
 
 func (m DefaultMapper[T]) ToTransport(
-	_ stream.ID,
+	_ string,
 	event stream.Event[T],
 ) (any, error) {
 	e, err := m.eventForEventName(event.EventName())
@@ -60,7 +60,7 @@ func (m DefaultMapper[T]) ToTransport(
 }
 
 func (m DefaultMapper[T]) FromTransport(
-	_ stream.ID,
+	_ string,
 	i any,
 ) (stream.Event[T], error) {
 	e, ok := i.(Event[T])

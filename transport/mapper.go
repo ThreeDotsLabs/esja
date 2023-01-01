@@ -11,14 +11,14 @@ type Mapper[T any] interface {
 	// FromTransport maps corresponding transport model
 	// into an instance of a stream.Event.
 	FromTransport(
-		stream.ID,
+		string,
 		any,
 	) (stream.Event[T], error)
 
 	// ToTransport maps a stream.Event into an instance of
 	// a corresponding transport model.
 	ToTransport(
-		stream.ID,
+		string,
 		stream.Event[T],
 	) (any, error)
 }

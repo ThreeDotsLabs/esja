@@ -61,8 +61,8 @@ func NewMappingAnonymizingPostcardRepository(ctx context.Context, db *sql.DB) (e
 						&Sent{},
 					},
 				),
-				pii.NewStructAnonymizer[stream.ID, any](
-					pii.NewAESAnonymizer[stream.ID](ConstantSecretProvider{}),
+				pii.NewStructAnonymizer[string, any](
+					pii.NewAESAnonymizer[string](ConstantSecretProvider{}),
 				),
 			),
 			Marshaler: transport.JSONMarshaler{},

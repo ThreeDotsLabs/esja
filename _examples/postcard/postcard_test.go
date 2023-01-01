@@ -58,7 +58,7 @@ func TestPostcard_Lifecycle(t *testing.T) {
 	}
 	assert.Equal(expectedEvents, events)
 
-	pcLoaded, err := stream.NewEntity(stream.ID(id), events)
+	pcLoaded, err := stream.NewEntity(id, events)
 	assert.NoError(err)
 
 	assert.Equal(senderAddress, pcLoaded.Sender())

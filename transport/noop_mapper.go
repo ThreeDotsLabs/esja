@@ -49,7 +49,7 @@ func (m NoOpMapper[T]) FromTransport(
 ) (esja.Event[T], error) {
 	event, ok := payload.(esja.Event[T])
 	if !ok {
-		return nil, fmt.Errorf("payload does not implement the stream.Event[T] interface")
+		return nil, fmt.Errorf("payload does not implement the esja.Event[T] interface")
 	}
 
 	return event, nil

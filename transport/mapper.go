@@ -11,13 +11,13 @@ type Mapper[T any] interface {
 	New(string) (any, error)
 
 	// FromTransport maps corresponding transport model
-	// into an instance of a stream.Event.
+	// into an instance of an esja.Event.
 	FromTransport(
 		string,
 		any,
 	) (esja.Event[T], error)
 
-	// ToTransport maps a stream.Event into an instance of
+	// ToTransport maps an esja.Event into an instance of
 	// a corresponding transport model.
 	ToTransport(
 		string,

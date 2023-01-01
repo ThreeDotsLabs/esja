@@ -65,7 +65,7 @@ func (m DefaultMapper[T]) FromTransport(
 ) (esja.Event[T], error) {
 	e, ok := i.(Event[T])
 	if !ok {
-		return nil, fmt.Errorf("payload does not implement the Event[T] interface")
+		return nil, fmt.Errorf("payload does not implement the transport.Event[T] interface")
 	}
 
 	return e.ToStreamEvent(), nil

@@ -12,15 +12,15 @@ package esja
 // Example:
 //
 //	type User struct {
-//	    stream *stream.Stream[User]
+//	    stream *esja.Stream[User]
 //	    id     string
 //	}
 //
-//	func (u User) Stream() *stream.Stream[User] {
+//	func (u User) Stream() *esja.Stream[User] {
 //	    return u.stream
 //	}
 //
-//	func (u User) NewWithStream(stream *stream.Stream[User]) *User {
+//	func (u User) NewWithStream(stream *esja.Stream[User]) *User {
 //		return &User{stream: stream}
 //	}
 type Entity[T any] interface {

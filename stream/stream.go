@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// Stream stores stream.
+// Stream represents a queue of events and basic stream properties.
 // Zero-value is a valid state, ready to use.
 type Stream[T any] struct {
 	id         string

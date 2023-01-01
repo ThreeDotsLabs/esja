@@ -140,13 +140,13 @@ func TestPostcard_Repositories(t *testing.T) {
 			require.NoError(t, err)
 
 			_, err = tc.repository.Load(ctx, id)
-			assert.ErrorIs(t, err, eventstore.ErrEntityNotFound, "expected stream not found yet")
+			assert.ErrorIs(t, err, eventstore.ErrEntityNotFound, "expected entity not found yet")
 
 			err = tc.repository.Save(ctx, pc)
-			require.NoError(t, err, "should save the stream and it has some events already")
+			require.NoError(t, err, "should save the entity and it has some events already")
 
 			fromRepo2, err := tc.repository.Load(ctx, id)
-			assert.NoError(t, err, "should retrieve the stream, some events should have been saved")
+			assert.NoError(t, err, "should retrieve the entity, some events should have been saved")
 
 			fromRepo2Duplicate, err := tc.repository.Load(ctx, id)
 			assert.NoError(t, err)
@@ -170,7 +170,7 @@ func TestPostcard_Repositories(t *testing.T) {
 			require.NoError(t, err)
 
 			err = tc.repository.Save(ctx, fromRepo2Duplicate)
-			require.Error(t, err, "should fail to save the same stream version")
+			require.Error(t, err, "should fail to save the same entity version")
 
 			fromRepo3, err := tc.repository.Load(ctx, id)
 			assert.NoError(t, err)

@@ -34,8 +34,6 @@ type SQLStore[T stream.Entity[T]] struct {
 }
 
 // NewSQLStore creates a new SQL EventStore.
-// The streamType is used to identify the stream type in the database. It should be a constant string and not change.
-// The serializer is used to translate the events to a database-friendly format and back.
 func NewSQLStore[T stream.Entity[T]](
 	ctx context.Context,
 	db ContextExecutor,
@@ -72,7 +70,7 @@ func (s SQLStore[T]) initializeSchema(ctx context.Context) error {
 	return nil
 }
 
-// Load loads the stream from the database events.
+// Load loads the entity from the database events.
 func (s SQLStore[T]) Load(ctx context.Context, id string) (*T, error) {
 	query, args, err := s.config.SchemaAdapter.SelectQuery(id)
 	if err != nil {
@@ -129,7 +127,7 @@ func (s SQLStore[T]) Load(ctx context.Context, id string) (*T, error) {
 	return stream.NewEntity(id, events)
 }
 
-// Save saves the stream's queued events to the database.
+// Save saves the entity's queued events to the database.
 func (s SQLStore[T]) Save(ctx context.Context, t *T) (err error) {
 	if t == nil {
 		return errors.New("target to save must not be nil")

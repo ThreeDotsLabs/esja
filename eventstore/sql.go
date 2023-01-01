@@ -9,7 +9,7 @@ import (
 	"github.com/ThreeDotsLabs/esja/stream"
 )
 
-// ContextExecutor can perform SQL queries with context
+// ContextExecutor can perform SQL queries with context.
 type ContextExecutor interface {
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)

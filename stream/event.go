@@ -4,6 +4,7 @@ type Event[T any] interface {
 	// EventName should identify the event and the version of its schema.
 	//
 	// Example:
+	//
 	// 	func (e FooCreated) EventName() string {
 	// 		return "FooCreated_v1"
 	// 	}

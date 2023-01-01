@@ -14,6 +14,7 @@ type Stream[T any] struct {
 	queue      []VersionedEvent[T]
 }
 
+// NewStream creates a new instance of a Stream with provided ID.
 func NewStream[T any](id string) (*Stream[T], error) {
 	if id == "" {
 		return nil, errors.New("empty id")
@@ -24,6 +25,7 @@ func NewStream[T any](id string) (*Stream[T], error) {
 	}, nil
 }
 
+// NewStreamWithType creates a new instance of a Stream with provided ID and custom type.
 func NewStreamWithType[T any](id string, streamType string) (*Stream[T], error) {
 	s, err := NewStream[T](id)
 	if err != nil {
@@ -43,7 +45,8 @@ func (s *Stream[T]) Type() string {
 	return s.streamType
 }
 
-// Record applies the provided Event to the entity and puts it into the stream's queue with proper version.
+// Record applies the provided Event to the entity
+// and puts it into the stream's event queue as a next VersionedEvent.
 func (s *Stream[T]) Record(entity *T, event Event[T]) error {
 	err := event.ApplyTo(entity)
 	if err != nil {
@@ -59,7 +62,7 @@ func (s *Stream[T]) Record(entity *T, event Event[T]) error {
 	return nil
 }
 
-// PopEvents returns the stream on the queue and clears it.
+// PopEvents returns the slice of queued VersionedEvents and clears it.
 func (s *Stream[T]) PopEvents() []VersionedEvent[T] {
 	tmp := make([]VersionedEvent[T], len(s.queue))
 	copy(tmp, s.queue)

@@ -33,31 +33,34 @@ func (e Event) ApplyTo(_ *Entity) error {
 	return nil
 }
 
-func TestNewEventsQueue(t *testing.T) {
+func TestNewStream(t *testing.T) {
 	var event1 stream.Event[Entity] = Event{ID: 1}
 	var event2 stream.Event[Entity] = Event{ID: 2}
 
-	str, err := stream.NewStream[Entity]("ID")
+	stm, err := stream.NewStreamWithType[Entity]("ID", "Stream")
 	require.NoError(t, err)
-	s := &Entity{
-		stream: str,
+	assert.Equal(t, "ID", stm.ID())
+	assert.Equal(t, "Stream", stm.Type())
+
+	entity := &Entity{
+		stream: stm,
 	}
 
-	assert.False(t, str.HasEvents())
+	assert.False(t, stm.HasEvents())
 
-	events := str.PopEvents()
+	events := stm.PopEvents()
 	assert.Len(t, events, 0)
 
-	err = str.Record(s, event1)
+	err = stm.Record(entity, event1)
 	assert.NoError(t, err)
-	err = str.Record(s, event2)
+	err = stm.Record(entity, event2)
 	assert.NoError(t, err)
 
-	assert.True(t, str.HasEvents())
+	assert.True(t, stm.HasEvents())
 
-	events = str.PopEvents()
+	events = stm.PopEvents()
 	assert.Len(t, events, 2)
-	assert.False(t, str.HasEvents())
+	assert.False(t, stm.HasEvents())
 
 	assert.Equal(t, event1, events[0].Event)
 	assert.Equal(t, 1, events[0].StreamVersion)
@@ -65,15 +68,15 @@ func TestNewEventsQueue(t *testing.T) {
 	assert.Equal(t, event2, events[1].Event)
 	assert.Equal(t, 2, events[1].StreamVersion)
 
-	events = str.PopEvents()
+	events = stm.PopEvents()
 	assert.Len(t, events, 0)
 
 	var event3 stream.Event[Entity] = Event{ID: 3}
 
-	err = str.Record(s, event3)
+	err = stm.Record(entity, event3)
 	assert.NoError(t, err)
 
-	events = str.PopEvents()
+	events = stm.PopEvents()
 	assert.Len(t, events, 1)
 
 	assert.Equal(t, event3, events[0].Event)

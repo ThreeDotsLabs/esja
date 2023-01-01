@@ -3,13 +3,13 @@ package stream
 type Event[T any] interface {
 	// EventName should identify the event and the version of its schema.
 	//
-	// Example implementation:
+	// Example:
 	// 	func (e FooCreated) EventName() string {
 	// 		return "FooCreated_v1"
 	// 	}
 	EventName() string
 
-	// ApplyTo applies the event to the stream.
+	// ApplyTo applies the event to the entity.
 	ApplyTo(*T) error
 }
 

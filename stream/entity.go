@@ -1,6 +1,6 @@
 package stream
 
-// Entity represents the type saved and loaded by the event store.
+// Entity represents the event-sourced type saved and loaded by the event store.
 // In DDD terms, it is the "aggregate root".
 //
 // In order for your domain type to implement Entity:
@@ -24,10 +24,11 @@ package stream
 //		return &User{stream: stream}
 //	}
 type Entity[T any] interface {
-	// Stream exposes a pointer to the Stream.
+	// Stream exposes a pointer to the internal entity's Stream.
 	Stream() *Stream[T]
 
-	// NewWithStream returns a new instance with the provided Stream queue.
+	// NewWithStream returns a new instance of T
+	// with the provided Stream queue injected.
 	NewWithStream(*Stream[T]) *T
 }
 

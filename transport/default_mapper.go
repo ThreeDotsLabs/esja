@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -45,6 +46,7 @@ func (m DefaultMapper[T]) New(name stream.EventName) (any, error) {
 }
 
 func (m DefaultMapper[T]) ToTransport(
+	_ context.Context,
 	_ stream.ID,
 	event stream.Event[T],
 ) (any, error) {
@@ -60,6 +62,7 @@ func (m DefaultMapper[T]) ToTransport(
 }
 
 func (m DefaultMapper[T]) FromTransport(
+	_ context.Context,
 	_ stream.ID,
 	i any,
 ) (stream.Event[T], error) {

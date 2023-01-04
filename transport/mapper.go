@@ -1,6 +1,8 @@
 package transport
 
 import (
+	"context"
+
 	"github.com/ThreeDotsLabs/esja"
 )
 
@@ -12,15 +14,9 @@ type Mapper[T any] interface {
 
 	// FromTransport maps corresponding transport model
 	// into an instance of an esja.Event.
-	FromTransport(
-		string,
-		any,
-	) (esja.Event[T], error)
+	FromTransport(context.Context, string, any) (esja.Event[T], error)
 
 	// ToTransport maps an esja.Event into an instance of
 	// a corresponding transport model.
-	ToTransport(
-		string,
-		esja.Event[T],
-	) (any, error)
+	ToTransport(context.Context, string, esja.Event[T]) (any, error)
 }

@@ -108,6 +108,10 @@ type Created struct {
 	ID string `json:"id"`
 }
 
+func (e *Created) StreamEventName() string {
+	return postcard.Created{}.EventName()
+}
+
 func (e *Created) FromStreamEvent(event esja.Event[postcard.Postcard]) {
 	created := event.(postcard.Created)
 	e.ID = created.ID
@@ -122,6 +126,10 @@ func (e *Created) ToStreamEvent() esja.Event[postcard.Postcard] {
 type Addressed struct {
 	Sender    Address `json:"sender"`
 	Addressee Address `json:"addressee"`
+}
+
+func (e *Addressed) StreamEventName() string {
+	return postcard.Addressed{}.EventName()
 }
 
 func (e *Addressed) FromStreamEvent(event esja.Event[postcard.Postcard]) {
@@ -148,6 +156,10 @@ type Written struct {
 	Content string `json:"content"`
 }
 
+func (e *Written) StreamEventName() string {
+	return postcard.Written{}.EventName()
+}
+
 func (e *Written) FromStreamEvent(event esja.Event[postcard.Postcard]) {
 	written := event.(postcard.Written)
 	e.Content = written.Content
@@ -160,6 +172,10 @@ func (e *Written) ToStreamEvent() esja.Event[postcard.Postcard] {
 }
 
 type Sent struct{}
+
+func (e *Sent) StreamEventName() string {
+	return postcard.Sent{}.EventName()
+}
 
 func (e *Sent) FromStreamEvent(_ esja.Event[postcard.Postcard]) {}
 

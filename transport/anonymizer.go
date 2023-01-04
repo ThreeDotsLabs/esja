@@ -1,6 +1,8 @@
 package transport
 
 import (
+	"context"
+
 	"github.com/ThreeDotsLabs/esja"
 )
 
@@ -8,11 +10,11 @@ import (
 type StructAnonymizer interface {
 	// Anonymize encrypts struct properties using secrets
 	// correlated with a provided stream ID.
-	Anonymize(key string, data any) (any, error)
+	Anonymize(ctx context.Context, key string, data any) (any, error)
 
 	// Deanonymize decrypts struct properties using secrets
 	// correlated with a provided stream ID.
-	Deanonymize(key string, data any) (any, error)
+	Deanonymize(ctx context.Context, key string, data any) (any, error)
 }
 
 // Anonymizer is a wrapper to any transport.Mapper instance.
@@ -39,15 +41,16 @@ func (a *Anonymizer[T]) New(name string) (any, error) {
 }
 
 func (a *Anonymizer[T]) FromTransport(
+	ctx context.Context,
 	streamID string,
 	payload any,
 ) (esja.Event[T], error) {
-	payload, err := a.anonymizer.Deanonymize(streamID, payload)
+	payload, err := a.anonymizer.Deanonymize(ctx, streamID, payload)
 	if err != nil {
 		return nil, err
 	}
 
-	event, err := a.mapper.FromTransport(streamID, payload)
+	event, err := a.mapper.FromTransport(ctx, streamID, payload)
 	if err != nil {
 		return nil, err
 	}
@@ -56,15 +59,16 @@ func (a *Anonymizer[T]) FromTransport(
 }
 
 func (a *Anonymizer[T]) ToTransport(
+	ctx context.Context,
 	streamID string,
 	event esja.Event[T],
 ) (any, error) {
-	e, err := a.mapper.ToTransport(streamID, event)
+	e, err := a.mapper.ToTransport(ctx, streamID, event)
 	if err != nil {
 		return nil, err
 	}
 
-	payload, err := a.anonymizer.Anonymize(streamID, e)
+	payload, err := a.anonymizer.Anonymize(ctx, streamID, e)
 	if err != nil {
 		return nil, err
 	}

@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -10,6 +11,7 @@ import (
 // Event is a transport model which defines which stream model
 // it corresponds to and implements the mapping from- and to- the stream model.
 type Event[T any] interface {
+	StreamEventName() string
 	FromStreamEvent(event esja.Event[T])
 	ToStreamEvent() esja.Event[T]
 }
@@ -27,7 +29,7 @@ func NewDefaultMapper[T any](
 ) DefaultMapper[T] {
 	supported := map[string]Event[T]{}
 	for _, e := range supportedEvents {
-		supported[e.ToStreamEvent().EventName()] = e
+		supported[e.StreamEventName()] = e
 	}
 
 	return DefaultMapper[T]{
@@ -45,6 +47,7 @@ func (m DefaultMapper[T]) New(name string) (any, error) {
 }
 
 func (m DefaultMapper[T]) ToTransport(
+	_ context.Context,
 	_ string,
 	event esja.Event[T],
 ) (any, error) {
@@ -60,6 +63,7 @@ func (m DefaultMapper[T]) ToTransport(
 }
 
 func (m DefaultMapper[T]) FromTransport(
+	_ context.Context,
 	_ string,
 	i any,
 ) (esja.Event[T], error) {

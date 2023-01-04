@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 
@@ -37,6 +38,7 @@ func (m NoOpMapper[T]) New(name string) (any, error) {
 }
 
 func (m NoOpMapper[T]) ToTransport(
+	_ context.Context,
 	_ string,
 	event esja.Event[T],
 ) (any, error) {
@@ -44,6 +46,7 @@ func (m NoOpMapper[T]) ToTransport(
 }
 
 func (m NoOpMapper[T]) FromTransport(
+	_ context.Context,
 	_ string,
 	payload any,
 ) (esja.Event[T], error) {

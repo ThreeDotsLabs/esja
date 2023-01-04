@@ -108,7 +108,7 @@ func NewGOBSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventstore
 
 type ConstantSecretProvider struct{}
 
-func (c ConstantSecretProvider) SecretForKey(id string) ([]byte, error) {
+func (c ConstantSecretProvider) SecretForKey(_ context.Context, id string) ([]byte, error) {
 	h, err := hex.DecodeString(strings.ReplaceAll(id, "-", ""))
 	if err != nil {
 		return nil, err

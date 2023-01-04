@@ -1,5 +1,7 @@
 github.com/ThreeDotsLabs/pii v0.0.0-20221221144555-f2186024b30d h1:bZBc4vDne17OYqoeSceaq5eaZM6vOUMVaJIBy+dNRH4=
 github.com/ThreeDotsLabs/pii v0.0.0-20221221144555-f2186024b30d/go.mod h1:wu5cEZEjFUIXR9hdniDvGbbZARrYHTRi6G2bNaSCC/E=
+github.com/ThreeDotsLabs/pii v0.0.0-20230103125711-e0908da9a963 h1:4EQlsCpfwxjn5ijR8fdL6ap1q04guWUCHgnZ+jPdEjY=
+github.com/ThreeDotsLabs/pii v0.0.0-20230103125711-e0908da9a963/go.mod h1:wu5cEZEjFUIXR9hdniDvGbbZARrYHTRi6G2bNaSCC/E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

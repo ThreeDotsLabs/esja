@@ -109,7 +109,7 @@ func (s SQLStore[T]) Load(ctx context.Context, id string) (*T, error) {
 			return nil, fmt.Errorf("error unmarshaling event payload: %w", err)
 		}
 
-		mappedEvent, err := s.config.Mapper.FromTransport(streamID, event)
+		mappedEvent, err := s.config.Mapper.FromTransport(ctx, streamID, event)
 		if err != nil {
 			return nil, fmt.Errorf("error deserializing event: %w", err)
 		}
@@ -142,7 +142,7 @@ func (s SQLStore[T]) Save(ctx context.Context, t *T) (err error) {
 
 	serializedEvents := make([]storageEvent[T], len(events))
 	for i, event := range events {
-		mapped, err := s.config.Mapper.ToTransport(stm.Stream().ID(), event.Event)
+		mapped, err := s.config.Mapper.ToTransport(ctx, stm.Stream().ID(), event.Event)
 		if err != nil {
 			return fmt.Errorf("error serializing event: %w", err)
 		}

@@ -4,7 +4,7 @@ package esja
 // In DDD terms, it is the "aggregate root".
 //
 // In order for your domain type to implement Entity:
-//   - Embed pointer to the Stream.
+//   - Keep *Stream in a field.
 //   - Implement the interface methods in accordance with its description.
 //
 // Then an EventStore will be able to store and load it.

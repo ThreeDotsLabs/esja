@@ -36,21 +36,21 @@ func NewAnonymizer[T any](
 	}
 }
 
-func (a *Anonymizer[T]) New(name string) (any, error) {
-	return a.mapper.New(name)
+func (a *Anonymizer[T]) New(eventName string) (any, error) {
+	return a.mapper.New(eventName)
 }
 
 func (a *Anonymizer[T]) FromTransport(
 	ctx context.Context,
 	streamID string,
-	payload any,
+	transportEvent any,
 ) (esja.Event[T], error) {
-	payload, err := a.anonymizer.Deanonymize(ctx, streamID, payload)
+	transportEvent, err := a.anonymizer.Deanonymize(ctx, streamID, transportEvent)
 	if err != nil {
 		return nil, err
 	}
 
-	event, err := a.mapper.FromTransport(ctx, streamID, payload)
+	event, err := a.mapper.FromTransport(ctx, streamID, transportEvent)
 	if err != nil {
 		return nil, err
 	}

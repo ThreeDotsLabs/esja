@@ -37,8 +37,8 @@ func NewDefaultMapper[T any](
 	}
 }
 
-func (m DefaultMapper[T]) New(name string) (any, error) {
-	e, err := m.eventForEventName(name)
+func (m DefaultMapper[T]) New(eventName string) (any, error) {
+	e, err := m.eventFor(eventName)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func (m DefaultMapper[T]) ToTransport(
 	_ string,
 	event esja.Event[T],
 ) (any, error) {
-	e, err := m.eventForEventName(event.EventName())
+	e, err := m.eventFor(event.EventName())
 	if err != nil {
 		return nil, err
 	}
@@ -65,9 +65,9 @@ func (m DefaultMapper[T]) ToTransport(
 func (m DefaultMapper[T]) FromTransport(
 	_ context.Context,
 	_ string,
-	i any,
+	transportEvent any,
 ) (esja.Event[T], error) {
-	e, ok := i.(Event[T])
+	e, ok := transportEvent.(Event[T])
 	if !ok {
 		return nil, fmt.Errorf("payload does not implement the transport.Event[T] interface")
 	}
@@ -75,10 +75,10 @@ func (m DefaultMapper[T]) FromTransport(
 	return e.ToStreamEvent(), nil
 }
 
-func (m DefaultMapper[T]) eventForEventName(name string) (Event[T], error) {
-	e, ok := m.supported[name]
+func (m DefaultMapper[T]) eventFor(eventName string) (Event[T], error) {
+	e, ok := m.supported[eventName]
 	if !ok {
-		return nil, fmt.Errorf("unsupported event of name '%s'", name)
+		return nil, fmt.Errorf("unsupported event of eventName '%s'", eventName)
 	}
 
 	return e, nil

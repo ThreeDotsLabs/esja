@@ -28,10 +28,10 @@ func NewNoOpMapper[T any](
 	}
 }
 
-func (m NoOpMapper[T]) New(name string) (any, error) {
-	e, ok := m.supported[name]
+func (m NoOpMapper[T]) New(eventName string) (any, error) {
+	e, ok := m.supported[eventName]
 	if !ok {
-		return nil, fmt.Errorf("unsupported event of name '%s'", name)
+		return nil, fmt.Errorf("unsupported event of name '%s'", eventName)
 	}
 
 	return newInstance(e), nil
@@ -48,11 +48,11 @@ func (m NoOpMapper[T]) ToTransport(
 func (m NoOpMapper[T]) FromTransport(
 	_ context.Context,
 	_ string,
-	payload any,
+	transportEvent any,
 ) (esja.Event[T], error) {
-	event, ok := payload.(esja.Event[T])
+	event, ok := transportEvent.(esja.Event[T])
 	if !ok {
-		return nil, fmt.Errorf("payload does not implement the esja.Event[T] interface")
+		return nil, fmt.Errorf("transport event does not implement the esja.Event[T] interface")
 	}
 
 	return event, nil

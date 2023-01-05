@@ -10,13 +10,13 @@ import (
 type Mapper[T any] interface {
 	// New returns a new instance of a transport model
 	// corresponding to the provided event name.
-	New(string) (any, error)
+	New(eventName string) (any, error)
 
 	// FromTransport maps corresponding transport model
 	// into an instance of an esja.Event.
-	FromTransport(context.Context, string, any) (esja.Event[T], error)
+	FromTransport(ctx context.Context, eventName string, transportEvent any) (esja.Event[T], error)
 
 	// ToTransport maps an esja.Event into an instance of
 	// a corresponding transport model.
-	ToTransport(context.Context, string, esja.Event[T]) (any, error)
+	ToTransport(ctx context.Context, eventName string, event esja.Event[T]) (any, error)
 }

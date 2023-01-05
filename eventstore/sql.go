@@ -70,6 +70,13 @@ func (s SQLStore[T]) initializeSchema(ctx context.Context) error {
 	return nil
 }
 
+type event struct {
+	streamID      string
+	streamVersion int
+	eventName     string
+	eventPayload  []byte
+}
+
 // Load loads the entity from the database events.
 func (s SQLStore[T]) Load(ctx context.Context, id string) (*T, error) {
 	query, args, err := s.config.SchemaAdapter.SelectQuery(id)
@@ -86,42 +93,43 @@ func (s SQLStore[T]) Load(ctx context.Context, id string) (*T, error) {
 		_ = results.Close()
 	}()
 
-	var (
-		streamID      string
-		streamVersion int
-		eventName     string
-		eventPayload  []byte
-		events        []esja.VersionedEvent[T]
-	)
+	var dbEvents []event
 	for results.Next() {
-		err = results.Scan(&streamID, &streamVersion, &eventName, &eventPayload)
+		e := event{}
+
+		err = results.Scan(&e.streamID, &e.streamVersion, &e.eventName, &e.eventPayload)
 		if err != nil {
 			return nil, fmt.Errorf("error reading row result: %w", err)
 		}
 
-		event, err := s.config.Mapper.New(eventName)
+		dbEvents = append(dbEvents, e)
+	}
+
+	if len(dbEvents) == 0 {
+		return nil, ErrEntityNotFound
+	}
+
+	var events []esja.VersionedEvent[T]
+	for _, e := range dbEvents {
+		event, err := s.config.Mapper.New(e.eventName)
 		if err != nil {
 			return nil, fmt.Errorf("error creating new event instance: %w", err)
 		}
 
-		err = s.config.Marshaler.Unmarshal(eventPayload, event)
+		err = s.config.Marshaler.Unmarshal(e.eventPayload, event)
 		if err != nil {
 			return nil, fmt.Errorf("error unmarshaling event payload: %w", err)
 		}
 
-		mappedEvent, err := s.config.Mapper.FromTransport(ctx, streamID, event)
+		mappedEvent, err := s.config.Mapper.FromTransport(ctx, e.streamID, event)
 		if err != nil {
 			return nil, fmt.Errorf("error deserializing event: %w", err)
 		}
 
 		events = append(events, esja.VersionedEvent[T]{
 			Event:         mappedEvent,
-			StreamVersion: streamVersion,
+			StreamVersion: e.streamVersion,
 		})
-	}
-
-	if len(events) == 0 {
-		return nil, ErrEntityNotFound
 	}
 
 	return esja.NewEntity(id, events)

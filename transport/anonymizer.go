@@ -1,18 +1,20 @@
 package transport
 
 import (
-	"github.com/ThreeDotsLabs/esja/stream"
+	"context"
+
+	"github.com/ThreeDotsLabs/esja"
 )
 
 // StructAnonymizer is an interface of the anonymizer component.
 type StructAnonymizer interface {
 	// Anonymize encrypts struct properties using secrets
-	// correlated with a provided stream.ID.
-	Anonymize(key stream.ID, data any) (any, error)
+	// correlated with a provided stream ID.
+	Anonymize(ctx context.Context, key string, data any) (any, error)
 
 	// Deanonymize decrypts struct properties using secrets
-	// correlated with a provided stream.ID.
-	Deanonymize(key stream.ID, data any) (any, error)
+	// correlated with a provided stream ID.
+	Deanonymize(ctx context.Context, key string, data any) (any, error)
 }
 
 // Anonymizer is a wrapper to any transport.Mapper instance.
@@ -34,20 +36,21 @@ func NewAnonymizer[T any](
 	}
 }
 
-func (a *Anonymizer[T]) New(name stream.EventName) (any, error) {
-	return a.mapper.New(name)
+func (a *Anonymizer[T]) New(eventName string) (any, error) {
+	return a.mapper.New(eventName)
 }
 
 func (a *Anonymizer[T]) FromTransport(
-	streamID stream.ID,
-	payload any,
-) (stream.Event[T], error) {
-	payload, err := a.anonymizer.Deanonymize(streamID, payload)
+	ctx context.Context,
+	streamID string,
+	transportEvent any,
+) (esja.Event[T], error) {
+	transportEvent, err := a.anonymizer.Deanonymize(ctx, streamID, transportEvent)
 	if err != nil {
 		return nil, err
 	}
 
-	event, err := a.mapper.FromTransport(streamID, payload)
+	event, err := a.mapper.FromTransport(ctx, streamID, transportEvent)
 	if err != nil {
 		return nil, err
 	}
@@ -56,15 +59,16 @@ func (a *Anonymizer[T]) FromTransport(
 }
 
 func (a *Anonymizer[T]) ToTransport(
-	streamID stream.ID,
-	event stream.Event[T],
+	ctx context.Context,
+	streamID string,
+	event esja.Event[T],
 ) (any, error) {
-	e, err := a.mapper.ToTransport(streamID, event)
+	e, err := a.mapper.ToTransport(ctx, streamID, event)
 	if err != nil {
 		return nil, err
 	}
 
-	payload, err := a.anonymizer.Anonymize(streamID, e)
+	payload, err := a.anonymizer.Anonymize(ctx, streamID, e)
 	if err != nil {
 		return nil, err
 	}

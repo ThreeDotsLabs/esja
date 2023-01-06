@@ -3,11 +3,11 @@ package postcard
 import (
 	"fmt"
 
-	"github.com/ThreeDotsLabs/esja/stream"
+	"github.com/ThreeDotsLabs/esja"
 )
 
 type Postcard struct {
-	stream *stream.Stream[Postcard]
+	stream *esja.Stream[Postcard]
 
 	id string
 
@@ -25,7 +25,7 @@ type Address struct {
 }
 
 func NewPostcard(id string) (*Postcard, error) {
-	s, err := stream.NewStreamWithType[Postcard](stream.ID(id), "Postcard")
+	s, err := esja.NewStreamWithType[Postcard](id, "Postcard")
 	if err != nil {
 		return nil, err
 	}
@@ -52,11 +52,11 @@ func (p *Postcard) Send() error {
 	return p.stream.Record(p, Sent{})
 }
 
-func (p Postcard) Stream() *stream.Stream[Postcard] {
+func (p Postcard) Stream() *esja.Stream[Postcard] {
 	return p.stream
 }
 
-func (p Postcard) NewWithStream(stream *stream.Stream[Postcard]) *Postcard {
+func (p Postcard) NewWithStream(stream *esja.Stream[Postcard]) *Postcard {
 	return &Postcard{stream: stream}
 }
 

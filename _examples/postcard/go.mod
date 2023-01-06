@@ -16,6 +16,7 @@ require (
 
 require (
 	github.com/cenkalti/backoff/v3 v3.2.2 // indirect
+	github.com/ThreeDotsLabs/pii v0.0.0-20230103125711-e0908da9a963 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/hashicorp/errwrap v1.0.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect

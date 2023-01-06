@@ -1,20 +1,20 @@
-package stream
+package esja
 
 import (
 	"errors"
 	"fmt"
 )
 
-// Stream stores stream.
-// Zero-value is a valid state, ready to use.
+// Stream represents a queue of events and basic stream properties.
 type Stream[T any] struct {
-	id         ID
+	id         string
 	streamType string
 	version    int
 	queue      []VersionedEvent[T]
 }
 
-func NewStream[T any](id ID) (*Stream[T], error) {
+// NewStream creates a new instance of a Stream with provided ID.
+func NewStream[T any](id string) (*Stream[T], error) {
 	if id == "" {
 		return nil, errors.New("empty id")
 	}
@@ -24,7 +24,8 @@ func NewStream[T any](id ID) (*Stream[T], error) {
 	}, nil
 }
 
-func NewStreamWithType[T any](id ID, streamType string) (*Stream[T], error) {
+// NewStreamWithType creates a new instance of a Stream with provided ID and custom type.
+func NewStreamWithType[T any](id string, streamType string) (*Stream[T], error) {
 	s, err := NewStream[T](id)
 	if err != nil {
 		return nil, err
@@ -35,7 +36,7 @@ func NewStreamWithType[T any](id ID, streamType string) (*Stream[T], error) {
 	return s, nil
 }
 
-func (s *Stream[T]) ID() ID {
+func (s *Stream[T]) ID() string {
 	return s.id
 }
 
@@ -43,7 +44,8 @@ func (s *Stream[T]) Type() string {
 	return s.streamType
 }
 
-// Record applies the provided Event to the entity and puts it into the stream's queue with proper version.
+// Record applies the provided Event to the entity
+// and puts it into the stream's event queue as a next VersionedEvent.
 func (s *Stream[T]) Record(entity *T, event Event[T]) error {
 	err := event.ApplyTo(entity)
 	if err != nil {
@@ -59,7 +61,7 @@ func (s *Stream[T]) Record(entity *T, event Event[T]) error {
 	return nil
 }
 
-// PopEvents returns the stream on the queue and clears it.
+// PopEvents returns the slice of queued VersionedEvents and clears it.
 func (s *Stream[T]) PopEvents() []VersionedEvent[T] {
 	tmp := make([]VersionedEvent[T], len(s.queue))
 	copy(tmp, s.queue)
@@ -73,7 +75,7 @@ func (s *Stream[T]) HasEvents() bool {
 	return len(s.queue) > 0
 }
 
-func newStream[T any](id ID, events []VersionedEvent[T]) (*Stream[T], error) {
+func newStream[T any](id string, events []VersionedEvent[T]) (*Stream[T], error) {
 	if len(events) == 0 {
 		return nil, fmt.Errorf("no stream to load")
 	}

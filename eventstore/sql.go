@@ -6,17 +6,17 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ThreeDotsLabs/esja/stream"
+	"github.com/ThreeDotsLabs/esja"
 )
 
-// ContextExecutor can perform SQL queries with context
+// ContextExecutor can perform SQL queries with context.
 type ContextExecutor interface {
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 }
 
 type storageEvent[A any] struct {
-	stream.VersionedEvent[A]
+	esja.VersionedEvent[A]
 	streamID string
 	payload  []byte
 }
@@ -28,15 +28,13 @@ type schemaAdapter[A any] interface {
 }
 
 // SQLStore is an implementation of the EventStore interface using an SQLStore database.
-type SQLStore[T stream.Entity[T]] struct {
+type SQLStore[T esja.Entity[T]] struct {
 	db     ContextExecutor
 	config SQLConfig[T]
 }
 
 // NewSQLStore creates a new SQL EventStore.
-// The streamType is used to identify the stream type in the database. It should be a constant string and not change.
-// The serializer is used to translate the events to a database-friendly format and back.
-func NewSQLStore[T stream.Entity[T]](
+func NewSQLStore[T esja.Entity[T]](
 	ctx context.Context,
 	db ContextExecutor,
 	config SQLConfig[T],
@@ -72,9 +70,16 @@ func (s SQLStore[T]) initializeSchema(ctx context.Context) error {
 	return nil
 }
 
-// Load loads the stream from the database events.
-func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (*T, error) {
-	query, args, err := s.config.SchemaAdapter.SelectQuery(id.String())
+type event struct {
+	streamID      string
+	streamVersion int
+	eventName     string
+	eventPayload  []byte
+}
+
+// Load loads the entity from the database events.
+func (s SQLStore[T]) Load(ctx context.Context, id string) (*T, error) {
+	query, args, err := s.config.SchemaAdapter.SelectQuery(id)
 	if err != nil {
 		return nil, fmt.Errorf("error building select query: %w", err)
 	}
@@ -88,48 +93,49 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (*T, error) {
 		_ = results.Close()
 	}()
 
-	var (
-		streamID      stream.ID
-		streamVersion int
-		eventName     stream.EventName
-		eventPayload  []byte
-		events        []stream.VersionedEvent[T]
-	)
+	var dbEvents []event
 	for results.Next() {
-		err = results.Scan(&streamID, &streamVersion, &eventName, &eventPayload)
+		e := event{}
+
+		err = results.Scan(&e.streamID, &e.streamVersion, &e.eventName, &e.eventPayload)
 		if err != nil {
 			return nil, fmt.Errorf("error reading row result: %w", err)
 		}
 
-		event, err := s.config.Mapper.New(eventName)
+		dbEvents = append(dbEvents, e)
+	}
+
+	if len(dbEvents) == 0 {
+		return nil, ErrEntityNotFound
+	}
+
+	var events []esja.VersionedEvent[T]
+	for _, e := range dbEvents {
+		event, err := s.config.Mapper.New(e.eventName)
 		if err != nil {
 			return nil, fmt.Errorf("error creating new event instance: %w", err)
 		}
 
-		err = s.config.Marshaler.Unmarshal(eventPayload, event)
+		err = s.config.Marshaler.Unmarshal(e.eventPayload, event)
 		if err != nil {
 			return nil, fmt.Errorf("error unmarshaling event payload: %w", err)
 		}
 
-		mappedEvent, err := s.config.Mapper.FromTransport(streamID, event)
+		mappedEvent, err := s.config.Mapper.FromTransport(ctx, e.streamID, event)
 		if err != nil {
 			return nil, fmt.Errorf("error deserializing event: %w", err)
 		}
 
-		events = append(events, stream.VersionedEvent[T]{
+		events = append(events, esja.VersionedEvent[T]{
 			Event:         mappedEvent,
-			StreamVersion: streamVersion,
+			StreamVersion: e.streamVersion,
 		})
 	}
 
-	if len(events) == 0 {
-		return nil, ErrStreamNotFound
-	}
-
-	return stream.NewEntity(id, events)
+	return esja.NewEntity(id, events)
 }
 
-// Save saves the stream's queued events to the database.
+// Save saves the entity's queued events to the database.
 func (s SQLStore[T]) Save(ctx context.Context, t *T) (err error) {
 	if t == nil {
 		return errors.New("target to save must not be nil")
@@ -144,7 +150,7 @@ func (s SQLStore[T]) Save(ctx context.Context, t *T) (err error) {
 
 	serializedEvents := make([]storageEvent[T], len(events))
 	for i, event := range events {
-		mapped, err := s.config.Mapper.ToTransport(stm.Stream().ID(), event.Event)
+		mapped, err := s.config.Mapper.ToTransport(ctx, stm.Stream().ID(), event.Event)
 		if err != nil {
 			return fmt.Errorf("error serializing event: %w", err)
 		}
@@ -156,7 +162,7 @@ func (s SQLStore[T]) Save(ctx context.Context, t *T) (err error) {
 
 		serializedEvents[i] = storageEvent[T]{
 			VersionedEvent: event,
-			streamID:       stm.Stream().ID().String(),
+			streamID:       stm.Stream().ID(),
 			payload:        payload,
 		}
 	}

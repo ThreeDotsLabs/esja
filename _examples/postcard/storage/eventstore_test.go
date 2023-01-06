@@ -14,7 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/ThreeDotsLabs/esja/eventstore"
-	"github.com/ThreeDotsLabs/esja/stream"
 
 	"postcard"
 	"postcard/storage"
@@ -141,22 +140,22 @@ func TestPostcard_Repositories(t *testing.T) {
 			err = pc.Address(senderAddress, addresseeAddress)
 			require.NoError(t, err)
 
-			_, err = tc.repository.Load(ctx, stream.ID(id))
-			assert.ErrorIs(t, err, eventstore.ErrStreamNotFound, "expected stream not found yet")
+			_, err = tc.repository.Load(ctx, id)
+			assert.ErrorIs(t, err, eventstore.ErrEntityNotFound, "expected entity not found yet")
 
 			err = tc.repository.Save(ctx, pc)
-			require.NoError(t, err, "should save the stream and it has some events already")
+			require.NoError(t, err, "should save the entity and it has some events already")
 
-			fromRepo2, err := tc.repository.Load(ctx, stream.ID(id))
-			assert.NoError(t, err, "should retrieve the stream, some events should have been saved")
+			fromRepo2, err := tc.repository.Load(ctx, id)
+			assert.NoError(t, err, "should retrieve the entity, some events should have been saved")
 
-			fromRepo2Duplicate, err := tc.repository.Load(ctx, stream.ID(id))
+			fromRepo2Duplicate, err := tc.repository.Load(ctx, id)
 			assert.NoError(t, err)
 
 			assert.Equal(t, pc.ID(), fromRepo2.ID())
 			assert.Equal(t, pc.Addressee(), fromRepo2.Addressee())
 			assert.Equal(t, pc.Sender(), fromRepo2.Sender())
-			assert.Empty(t, fromRepo2.Events().PopEvents())
+			assert.Empty(t, fromRepo2.Stream().PopEvents())
 
 			err = fromRepo2.Write("content")
 			require.NoError(t, err)
@@ -172,9 +171,9 @@ func TestPostcard_Repositories(t *testing.T) {
 			require.NoError(t, err)
 
 			err = tc.repository.Save(ctx, fromRepo2Duplicate)
-			require.Error(t, err, "should fail to save the same stream version")
+			require.Error(t, err, "should fail to save the same entity version")
 
-			fromRepo3, err := tc.repository.Load(ctx, stream.ID(id))
+			fromRepo3, err := tc.repository.Load(ctx, id)
 			assert.NoError(t, err)
 
 			assert.Equal(t, id, fromRepo3.ID())
@@ -182,7 +181,7 @@ func TestPostcard_Repositories(t *testing.T) {
 			assert.Equal(t, addresseeAddress, fromRepo3.Addressee())
 			assert.Equal(t, "content", fromRepo3.Content())
 			assert.True(t, fromRepo3.Sent())
-			assert.Empty(t, fromRepo3.Events().PopEvents())
+			assert.Empty(t, fromRepo3.Stream().PopEvents())
 		})
 	}
 }

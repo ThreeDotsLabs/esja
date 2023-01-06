@@ -6,17 +6,17 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ThreeDotsLabs/esja/stream"
+	"github.com/ThreeDotsLabs/esja"
 )
 
-// ContextExecutor can perform SQL queries with context
+// ContextExecutor can perform SQL queries with context.
 type ContextExecutor interface {
 	ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 	QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 }
 
 type storageEvent[A any] struct {
-	stream.VersionedEvent[A]
+	esja.VersionedEvent[A]
 	streamID string
 	payload  []byte
 }
@@ -28,15 +28,13 @@ type schemaAdapter[A any] interface {
 }
 
 // SQLStore is an implementation of the EventStore interface using an SQLStore database.
-type SQLStore[T stream.Stream[T]] struct {
+type SQLStore[T esja.Entity[T]] struct {
 	db     ContextExecutor
 	config SQLConfig[T]
 }
 
 // NewSQLStore creates a new SQL EventStore.
-// The streamType is used to identify the stream type in the database. It should be a constant string and not change.
-// The serializer is used to translate the events to a database-friendly format and back.
-func NewSQLStore[T stream.Stream[T]](
+func NewSQLStore[T esja.Entity[T]](
 	ctx context.Context,
 	db ContextExecutor,
 	config SQLConfig[T],
@@ -73,15 +71,15 @@ func (s SQLStore[T]) initializeSchema(ctx context.Context) error {
 }
 
 type event struct {
-	streamID      stream.ID
+	streamID      string
 	streamVersion int
-	eventName     stream.EventName
+	eventName     string
 	eventPayload  []byte
 }
 
-// Load loads the stream from the database events.
-func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (*T, error) {
-	query, args, err := s.config.SchemaAdapter.SelectQuery(id.String())
+// Load loads the entity from the database events.
+func (s SQLStore[T]) Load(ctx context.Context, id string) (*T, error) {
+	query, args, err := s.config.SchemaAdapter.SelectQuery(id)
 	if err != nil {
 		return nil, fmt.Errorf("error building select query: %w", err)
 	}
@@ -108,10 +106,10 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (*T, error) {
 	}
 
 	if len(dbEvents) == 0 {
-		return nil, ErrStreamNotFound
+		return nil, ErrEntityNotFound
 	}
 
-	var events []stream.VersionedEvent[T]
+	var events []esja.VersionedEvent[T]
 	for _, e := range dbEvents {
 		event, err := s.config.Mapper.New(e.eventName)
 		if err != nil {
@@ -128,16 +126,16 @@ func (s SQLStore[T]) Load(ctx context.Context, id stream.ID) (*T, error) {
 			return nil, fmt.Errorf("error deserializing event: %w", err)
 		}
 
-		events = append(events, stream.VersionedEvent[T]{
+		events = append(events, esja.VersionedEvent[T]{
 			Event:         mappedEvent,
 			StreamVersion: e.streamVersion,
 		})
 	}
 
-	return stream.New(events)
+	return esja.NewEntity(id, events)
 }
 
-// Save saves the stream's queued events to the database.
+// Save saves the entity's queued events to the database.
 func (s SQLStore[T]) Save(ctx context.Context, t *T) (err error) {
 	if t == nil {
 		return errors.New("target to save must not be nil")
@@ -145,14 +143,14 @@ func (s SQLStore[T]) Save(ctx context.Context, t *T) (err error) {
 
 	stm := *t
 
-	events := stm.Events().PopEvents()
+	events := stm.Stream().PopEvents()
 	if len(events) == 0 {
 		return errors.New("no events to save")
 	}
 
 	serializedEvents := make([]storageEvent[T], len(events))
 	for i, event := range events {
-		mapped, err := s.config.Mapper.ToTransport(ctx, stm.StreamID(), event.Event)
+		mapped, err := s.config.Mapper.ToTransport(ctx, stm.Stream().ID(), event.Event)
 		if err != nil {
 			return fmt.Errorf("error serializing event: %w", err)
 		}
@@ -164,12 +162,12 @@ func (s SQLStore[T]) Save(ctx context.Context, t *T) (err error) {
 
 		serializedEvents[i] = storageEvent[T]{
 			VersionedEvent: event,
-			streamID:       stm.StreamID().String(),
+			streamID:       stm.Stream().ID(),
 			payload:        payload,
 		}
 	}
 
-	stmType := stream.GetStreamType(t)
+	stmType := stm.Stream().Type()
 	query, args, err := s.config.SchemaAdapter.InsertQuery(stmType, serializedEvents)
 	if err != nil {
 		return fmt.Errorf("error building insert query: %w", err)

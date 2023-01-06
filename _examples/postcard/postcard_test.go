@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/ThreeDotsLabs/esja/stream"
+	"github.com/ThreeDotsLabs/esja"
 
 	"postcard"
 )
@@ -48,17 +48,17 @@ func TestPostcard_Lifecycle(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal("content", pc.Content())
 
-	events := pc.Events().PopEvents()
+	events := pc.Stream().PopEvents()
 	assert.Len(events, 3)
 
-	expectedEvents := []stream.VersionedEvent[postcard.Postcard]{
+	expectedEvents := []esja.VersionedEvent[postcard.Postcard]{
 		{Event: postcard.Created{ID: id}, StreamVersion: 1},
 		{Event: postcard.Addressed{Sender: senderAddress, Addressee: addresseeAddress}, StreamVersion: 2},
 		{Event: postcard.Written{Content: "content"}, StreamVersion: 3},
 	}
 	assert.Equal(expectedEvents, events)
 
-	pcLoaded, err := stream.New(events)
+	pcLoaded, err := esja.NewEntity(id, events)
 	assert.NoError(err)
 
 	assert.Equal(senderAddress, pcLoaded.Sender())
@@ -66,10 +66,10 @@ func TestPostcard_Lifecycle(t *testing.T) {
 	assert.Equal("content", pcLoaded.Content())
 	assert.False(pcLoaded.Sent())
 
-	events = pc.Events().PopEvents()
+	events = pc.Stream().PopEvents()
 	assert.Len(events, 0)
 
-	events = pcLoaded.Events().PopEvents()
+	events = pcLoaded.Stream().PopEvents()
 	assert.Len(events, 0)
 
 	err = pcLoaded.Write("new content")
@@ -79,10 +79,10 @@ func TestPostcard_Lifecycle(t *testing.T) {
 	require.NoError(t, err)
 	assert.True(pcLoaded.Sent())
 
-	events = pcLoaded.Events().PopEvents()
+	events = pcLoaded.Stream().PopEvents()
 	assert.Len(events, 2)
 
-	expectedEvents = []stream.VersionedEvent[postcard.Postcard]{
+	expectedEvents = []esja.VersionedEvent[postcard.Postcard]{
 		{Event: postcard.Written{Content: "new content"}, StreamVersion: 4},
 		{Event: postcard.Sent{}, StreamVersion: 5},
 	}

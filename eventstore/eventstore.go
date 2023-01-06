@@ -4,18 +4,16 @@ import (
 	"context"
 	"errors"
 
-	"github.com/ThreeDotsLabs/esja/stream"
+	"github.com/ThreeDotsLabs/esja"
 )
 
-var ErrStreamNotFound = errors.New("stream not found by ID")
+var ErrEntityNotFound = errors.New("entity not found by ID")
 
-// EventStore loads and saves T implementing stream.Stream
-type EventStore[T stream.Stream[T]] interface {
-	// Load will fetch all events for `StreamID()` and use them
-	// to instantiate a pointer to `T` using `FromEvents()` and return it.
-	Load(ctx context.Context, id stream.ID) (*T, error)
+// EventStore loads and saves T implementing esja.Entity.
+type EventStore[T esja.Entity[T]] interface {
+	// Load fetches all events for the ID and returns a new instance of T based on them.
+	Load(ctx context.Context, id string) (*T, error)
 
-	// Save will call `PopEvents()` and then save them
-	// under the stream's id from `StreamID()`.
-	Save(ctx context.Context, stream *T) error
+	// Save saves events recorded in the entity's stream.
+	Save(ctx context.Context, entity *T) error
 }

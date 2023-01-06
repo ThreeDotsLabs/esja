@@ -3,11 +3,11 @@ package postcard
 import (
 	"fmt"
 
-	"github.com/ThreeDotsLabs/esja/stream"
+	"github.com/ThreeDotsLabs/esja"
 )
 
 type Postcard struct {
-	events *stream.Events[Postcard]
+	stream *esja.Stream[Postcard]
 
 	id string
 
@@ -16,6 +16,7 @@ type Postcard struct {
 	content   string
 	sent      bool
 }
+
 type Address struct {
 	Name  string `anonymize:"true"`
 	Line1 string
@@ -24,11 +25,16 @@ type Address struct {
 }
 
 func NewPostcard(id string) (*Postcard, error) {
-	p := &Postcard{
-		events: new(stream.Events[Postcard]),
+	s, err := esja.NewStreamWithType[Postcard](id, "Postcard")
+	if err != nil {
+		return nil, err
 	}
 
-	err := stream.Record[Postcard](p, Created{
+	p := &Postcard{
+		stream: s,
+	}
+
+	err = p.stream.Record(p, Created{
 		ID: id,
 	})
 	if err != nil {
@@ -43,23 +49,15 @@ func (p *Postcard) Send() error {
 		return fmt.Errorf("postcard already sent")
 	}
 
-	return stream.Record[Postcard](p, Sent{})
+	return p.stream.Record(p, Sent{})
 }
 
-func (p Postcard) StreamType() string {
-	return "Postcard"
+func (p Postcard) Stream() *esja.Stream[Postcard] {
+	return p.stream
 }
 
-func (p Postcard) StreamID() stream.ID {
-	return stream.ID(p.id)
-}
-
-func (p Postcard) Events() *stream.Events[Postcard] {
-	return p.events
-}
-
-func (p Postcard) NewFromEvents(events *stream.Events[Postcard]) *Postcard {
-	return &Postcard{events: events}
+func (p Postcard) NewWithStream(stream *esja.Stream[Postcard]) *Postcard {
+	return &Postcard{stream: stream}
 }
 
 func (p Postcard) ID() string {
@@ -83,13 +81,13 @@ func (p Postcard) Sent() bool {
 }
 
 func (p *Postcard) Write(content string) error {
-	return stream.Record[Postcard](p, Written{
+	return p.stream.Record(p, Written{
 		Content: content,
 	})
 }
 
 func (p *Postcard) Address(sender Address, addressee Address) error {
-	return stream.Record[Postcard](p, Addressed{
+	return p.stream.Record(p, Addressed{
 		Sender:    sender,
 		Addressee: addressee,
 	})

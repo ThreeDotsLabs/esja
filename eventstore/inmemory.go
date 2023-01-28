@@ -102,16 +102,27 @@ func (i *InMemoryStore[T]) storeEntityEvents(entity T) (int, error) {
 		return 0, errors.New("no events to save")
 	}
 
-	_, ok := i.events[entity.Stream().ID()]
+	priorEvents, ok := i.events[entity.Stream().ID()]
 	if !ok {
 		i.events[entity.Stream().ID()] = make([]esja.VersionedEvent[T], 0)
 	}
 
-	currentVersion := 0
+	lastVersion := 0
+	for _, e := range priorEvents {
+		if e.StreamVersion > lastVersion {
+			lastVersion = e.StreamVersion
+		}
+	}
+
+	currentVersion := lastVersion
 	for _, e := range events {
+		if e.StreamVersion <= currentVersion {
+			return 0, errors.New("stream version duplicate")
+		}
 		if e.StreamVersion > currentVersion {
 			currentVersion = e.StreamVersion
 		}
+
 		i.events[entity.Stream().ID()] = append(
 			i.events[entity.Stream().ID()],
 			e,

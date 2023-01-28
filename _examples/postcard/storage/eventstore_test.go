@@ -42,7 +42,7 @@ func TestPostcard_Repositories(t *testing.T) {
 	}{
 		{
 			name:       "in_memory",
-			repository: eventstore.NewInMemoryStore[postcard.Postcard](),
+			repository: eventstore.NewInMemoryStore[postcard.Postcard](eventstore.InMemoryStoreConfig{}),
 		},
 		{
 			name: "postgres_simple",

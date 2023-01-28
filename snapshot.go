@@ -1,6 +1,6 @@
 package esja
 
-// Snapshot is an Event which stores and applies the current state back to the Entity.
+// Snapshot is an Event that stores and applies the current state back to the Entity.
 type Snapshot[T any] interface {
 	Event[T]
 }
@@ -11,6 +11,6 @@ type Snapshot[T any] interface {
 type EntityWithSnapshots[T any] interface {
 	Entity[T]
 
-	// Snapshot returns a Snapshot representing current state of the Entity.
+	// Snapshot returns a Snapshot representing current the state of the Entity.
 	Snapshot() Snapshot[T]
 }

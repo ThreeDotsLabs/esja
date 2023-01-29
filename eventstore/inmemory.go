@@ -18,7 +18,7 @@ type InMemoryStoreConfig struct {
 type InMemoryStore[T esja.Entity[T]] struct {
 	lock      sync.RWMutex
 	events    map[string][]esja.VersionedEvent[T]
-	snapshots map[string][]esja.VersionedEvent[T]
+	snapshots map[string][]esja.VersionedSnapshot[T]
 	config    InMemoryStoreConfig
 }
 
@@ -26,7 +26,7 @@ func NewInMemoryStore[T esja.Entity[T]](config InMemoryStoreConfig) *InMemorySto
 	return &InMemoryStore[T]{
 		lock:      sync.RWMutex{},
 		events:    map[string][]esja.VersionedEvent[T]{},
-		snapshots: map[string][]esja.VersionedEvent[T]{},
+		snapshots: map[string][]esja.VersionedSnapshot[T]{},
 		config:    config,
 	}
 }
@@ -45,8 +45,8 @@ func (i *InMemoryStore[T]) Load(_ context.Context, id string) (*T, error) {
 	var eventsToApply []esja.VersionedEvent[T]
 
 	s, found := i.loadLastSnapshot(id)
-	if found {
-		eventsToApply = append(eventsToApply, s)
+	if !found {
+		return esja.NewEntity(id, events)
 	}
 
 	for _, e := range events {
@@ -55,7 +55,7 @@ func (i *InMemoryStore[T]) Load(_ context.Context, id string) (*T, error) {
 		}
 	}
 
-	return esja.NewEntity(id, eventsToApply)
+	return esja.NewEntityWithSnapshot(id, s, eventsToApply)
 }
 
 func (i *InMemoryStore[T]) Save(_ context.Context, t *T) error {
@@ -85,9 +85,9 @@ func (i *InMemoryStore[T]) Save(_ context.Context, t *T) error {
 	return nil
 }
 
-func (i *InMemoryStore[T]) loadLastSnapshot(id string) (esja.VersionedEvent[T], bool) {
+func (i *InMemoryStore[T]) loadLastSnapshot(id string) (esja.VersionedSnapshot[T], bool) {
 	snapshots, found := i.snapshots[id]
-	var lastSnapshot esja.VersionedEvent[T]
+	var lastSnapshot esja.VersionedSnapshot[T]
 	for _, s := range snapshots {
 		if s.StreamVersion >= lastSnapshot.StreamVersion {
 			lastSnapshot = s
@@ -151,14 +151,14 @@ func (i *InMemoryStore[T]) storeEntitySnapshot(
 	}
 
 	snapshot := entity.Snapshot()
-	snapshotVersioned := esja.VersionedEvent[T]{
-		Event:         esja.Event[T](snapshot),
+	snapshotVersioned := esja.VersionedSnapshot[T]{
+		Snapshot:      snapshot,
 		StreamVersion: currentVersion,
 	}
 
 	_, ok := i.snapshots[entity.Stream().ID()]
 	if !ok {
-		i.snapshots[entity.Stream().ID()] = make([]esja.VersionedEvent[T], 0)
+		i.snapshots[entity.Stream().ID()] = make([]esja.VersionedSnapshot[T], 0)
 	}
 
 	i.snapshots[entity.Stream().ID()] = append(

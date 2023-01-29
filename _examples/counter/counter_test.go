@@ -4,7 +4,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	counter "postcard"
+
+	"counter"
 )
 
 func TestCounter(t *testing.T) {

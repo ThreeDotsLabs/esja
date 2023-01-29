@@ -5,7 +5,7 @@ type Snapshot struct {
 	CurrentValue int
 }
 
-func (s Snapshot) EventName() string {
+func (s Snapshot) SnapshotName() string {
 	return "CounterSnapshot_v1"
 }
 

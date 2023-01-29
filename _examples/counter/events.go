@@ -18,7 +18,7 @@ type IncrementedBy struct {
 }
 
 func (IncrementedBy) EventName() string {
-	return "Created_v1"
+	return "IncrementedBy_v1"
 }
 
 func (e IncrementedBy) ApplyTo(c *Counter) error {

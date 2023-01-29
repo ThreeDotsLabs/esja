@@ -36,7 +36,7 @@ type Entity[T any] interface {
 
 // NewEntityWithSnapshot instantiates a new T with the given snapshot and events applied to it.
 // At the same time the entity's internal Stream is initialised,
-// so it can record new upcoming stream.
+// so it can record new upcoming events.
 func NewEntityWithSnapshot[T Entity[T]](
 	id string,
 	snapshot VersionedSnapshot[T],
@@ -75,7 +75,7 @@ func NewEntityWithSnapshot[T Entity[T]](
 
 // NewEntity instantiates a new T with the given events applied to it.
 // At the same time the entity's internal Stream is initialised,
-// so it can record new upcoming stream.
+// so it can record new upcoming events.
 func NewEntity[T Entity[T]](
 	id string,
 	events []VersionedEvent[T],

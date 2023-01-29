@@ -1,5 +1,7 @@
 package esja
 
+import "fmt"
+
 // Entity represents the event-sourced type saved and loaded by the event store.
 // In DDD terms, it is the "aggregate root".
 //
@@ -32,21 +34,70 @@ type Entity[T any] interface {
 	NewWithStream(*Stream[T]) *T
 }
 
-// NewEntity instantiates a new T with the given events applied to it.
+// NewEntityWithSnapshot instantiates a new T with the given snapshot and events applied to it.
 // At the same time the entity's internal Stream is initialised,
-// so it can record new upcoming stream.
-func NewEntity[T Entity[T]](id string, eventsSlice []VersionedEvent[T]) (*T, error) {
+// so it can record new upcoming events.
+func NewEntityWithSnapshot[T Entity[T]](
+	id string,
+	snapshot VersionedSnapshot[T],
+	events []VersionedEvent[T],
+) (*T, error) {
 	var t T
 
-	stream, err := newStream(id, eventsSlice)
+	stream, err := NewStream[T](id)
 	if err != nil {
 		return nil, err
 	}
 
-	eventsSlice = stream.PopEvents()
+	stream.queue = events
+	stream.version = snapshot.StreamVersion
+	if len(events) != 0 {
+		stream.version = events[len(events)-1].StreamVersion
+	}
 
 	target := t.NewWithStream(stream)
-	for _, e := range eventsSlice {
+
+	err = snapshot.ApplyTo(target)
+	if err != nil {
+		return nil, err
+	}
+
+	events = stream.PopEvents()
+	for _, e := range events {
+		err := e.ApplyTo(target)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return target, nil
+}
+
+// NewEntity instantiates a new T with the given events applied to it.
+// At the same time the entity's internal Stream is initialised,
+// so it can record new upcoming events.
+func NewEntity[T Entity[T]](
+	id string,
+	events []VersionedEvent[T],
+) (*T, error) {
+	if len(events) == 0 {
+		return nil, fmt.Errorf("no stream to load")
+	}
+
+	var t T
+
+	stream, err := NewStream[T](id)
+	if err != nil {
+		return nil, err
+	}
+
+	stream.queue = events
+	stream.version = events[len(events)-1].StreamVersion
+
+	target := t.NewWithStream(stream)
+
+	events = stream.PopEvents()
+	for _, e := range events {
 		err := e.ApplyTo(target)
 		if err != nil {
 			return nil, err

@@ -44,14 +44,6 @@ func NewPostcard(id string) (*Postcard, error) {
 	return p, nil
 }
 
-func (p *Postcard) Send() error {
-	if p.sent {
-		return fmt.Errorf("postcard already sent")
-	}
-
-	return p.stream.Record(p, Sent{})
-}
-
 func (p Postcard) Stream() *esja.Stream[Postcard] {
 	return p.stream
 }
@@ -78,6 +70,14 @@ func (p Postcard) Content() string {
 
 func (p Postcard) Sent() bool {
 	return p.sent
+}
+
+func (p *Postcard) Send() error {
+	if p.sent {
+		return fmt.Errorf("postcard already sent")
+	}
+
+	return p.stream.Record(p, Sent{})
 }
 
 func (p *Postcard) Write(content string) error {

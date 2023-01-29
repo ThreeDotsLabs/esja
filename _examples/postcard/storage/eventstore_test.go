@@ -12,11 +12,11 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"postcard/storage"
 
 	"github.com/ThreeDotsLabs/esja/eventstore"
 
 	"postcard"
-	"postcard/storage"
 )
 
 var (
@@ -42,7 +42,7 @@ func TestPostcard_Repositories(t *testing.T) {
 	}{
 		{
 			name:       "in_memory",
-			repository: eventstore.NewInMemoryStore[postcard.Postcard](),
+			repository: eventstore.NewInMemoryStore[postcard.Postcard](eventstore.InMemoryStoreConfig{}),
 		},
 		{
 			name: "postgres_simple",

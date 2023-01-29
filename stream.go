@@ -2,7 +2,6 @@ package esja
 
 import (
 	"errors"
-	"fmt"
 )
 
 // Stream represents a queue of events and basic stream properties.
@@ -73,19 +72,4 @@ func (s *Stream[T]) PopEvents() []VersionedEvent[T] {
 // HasEvents returns true if there are any queued stream.
 func (s *Stream[T]) HasEvents() bool {
 	return len(s.queue) > 0
-}
-
-func newStream[T any](id string, events []VersionedEvent[T]) (*Stream[T], error) {
-	if len(events) == 0 {
-		return nil, fmt.Errorf("no stream to load")
-	}
-
-	e, err := NewStream[T](id)
-	if err != nil {
-		return nil, err
-	}
-	e.version = events[len(events)-1].StreamVersion
-	e.queue = events
-
-	return e, nil
 }

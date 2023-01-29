@@ -2,9 +2,8 @@ package esja
 
 // Snapshot is an Event that stores and applies the current state back to the Entity.
 type Snapshot[T any] interface {
-	// Applicable interface requires that each snapshot itself implements
-	// the logic how the snapshot data is applied back to the Entity.
-	Applicable[T]
+	// ApplyTo applies the snapshot to the entity.
+	ApplyTo(*T) error
 
 	// SnapshotName should identify the snapshot and the version of its schema.
 	SnapshotName() string

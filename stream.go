@@ -75,15 +75,22 @@ func (s *Stream[T]) HasEvents() bool {
 	return len(s.queue) > 0
 }
 
-func newStream[T any](id string, events []VersionedEvent[T]) (*Stream[T], error) {
+func newStream[T any](id string, st string, events []VersionedEvent[T]) (*Stream[T], error) {
 	if len(events) == 0 {
 		return nil, fmt.Errorf("no stream to load")
 	}
 
-	e, err := NewStream[T](id)
+	var e *Stream[T]
+	var err error
+	if st == "" {
+		e, err = NewStream[T](id)
+	} else {
+		e, err = NewStreamWithType[T](id, st)
+	}
 	if err != nil {
 		return nil, err
 	}
+
 	e.version = events[len(events)-1].StreamVersion
 	e.queue = events
 

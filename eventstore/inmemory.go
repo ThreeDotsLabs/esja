@@ -9,14 +9,16 @@ import (
 )
 
 type InMemoryStore[T esja.Entity[T]] struct {
-	lock   sync.RWMutex
-	events map[string][]esja.VersionedEvent[T]
+	lock        sync.RWMutex
+	events      map[string][]esja.VersionedEvent[T]
+	streamTypes map[string]string
 }
 
 func NewInMemoryStore[T esja.Entity[T]]() *InMemoryStore[T] {
 	return &InMemoryStore[T]{
-		lock:   sync.RWMutex{},
-		events: map[string][]esja.VersionedEvent[T]{},
+		lock:        sync.RWMutex{},
+		events:      map[string][]esja.VersionedEvent[T]{},
+		streamTypes: map[string]string{},
 	}
 }
 
@@ -29,7 +31,9 @@ func (i *InMemoryStore[T]) Load(_ context.Context, id string) (*T, error) {
 		return nil, ErrEntityNotFound
 	}
 
-	return esja.NewEntity(id, events)
+	streamType, _ := i.streamTypes[id]
+
+	return esja.NewEntity(id, streamType, events)
 }
 
 func (i *InMemoryStore[T]) Save(_ context.Context, t *T) error {
@@ -41,6 +45,8 @@ func (i *InMemoryStore[T]) Save(_ context.Context, t *T) error {
 	}
 
 	stm := *t
+
+	i.streamTypes[stm.Stream().ID()] = stm.Stream().Type()
 
 	events := stm.Stream().PopEvents()
 	if len(events) == 0 {

@@ -58,7 +58,7 @@ func TestPostcard_Lifecycle(t *testing.T) {
 	}
 	assert.Equal(expectedEvents, events)
 
-	pcLoaded, err := esja.NewEntity(id, events)
+	pcLoaded, err := esja.NewEntity(id, "", events)
 	assert.NoError(err)
 
 	assert.Equal(senderAddress, pcLoaded.Sender())

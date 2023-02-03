@@ -11,6 +11,7 @@ const (
 SELECT 
 	stream_id, 
 	stream_version, 
+	stream_type, 
 	event_name, 
 	event_payload
 FROM %s

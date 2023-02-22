@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/google/uuid"
+	"github.com/brianvoe/gofakeit/v6"
 	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/stretchr/testify/assert"
@@ -131,7 +131,8 @@ func TestPostcard_Repositories(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
-			id := uuid.NewString()
+			// A random id with more than 36 chars (UUID is 36 chars long).
+			id := gofakeit.Generate("streamID-#############################??????????????????????????")
 
 			pc, err := postcard.NewPostcard(id)
 			assert.NoError(t, err)

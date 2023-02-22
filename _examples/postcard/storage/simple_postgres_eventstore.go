@@ -2,9 +2,9 @@ package storage
 
 import (
 	"context"
+	"crypto/md5"
 	"database/sql"
 	"encoding/hex"
-	"strings"
 
 	"github.com/ThreeDotsLabs/esja"
 	"github.com/ThreeDotsLabs/esja/eventstore"
@@ -109,7 +109,8 @@ func NewGOBSQLitePostcardRepository(ctx context.Context, db *sql.DB) (eventstore
 type ConstantSecretProvider struct{}
 
 func (c ConstantSecretProvider) SecretForKey(_ context.Context, id string) ([]byte, error) {
-	h, err := hex.DecodeString(strings.ReplaceAll(id, "-", ""))
+	hash := md5.Sum([]byte(id))
+	h, err := hex.DecodeString(hex.EncodeToString(hash[:]))
 	if err != nil {
 		return nil, err
 	}

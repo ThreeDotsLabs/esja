@@ -131,7 +131,7 @@ func TestPostcard_Repositories(t *testing.T) {
 	for i := range testCases {
 		tc := testCases[i]
 		t.Run(tc.name, func(t *testing.T) {
-			// A random id with more than 36 chars (UUID)
+			// A random id with more than 36 chars (UUID is 36 chars long).
 			id := gofakeit.Generate("streamID-#############################??????????????????????????")
 
 			pc, err := postcard.NewPostcard(id)

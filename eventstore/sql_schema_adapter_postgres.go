@@ -7,7 +7,7 @@ import (
 const postgresInitializeSchemaQuery = `
 CREATE TABLE IF NOT EXISTS %[1]s (
 		id serial NOT NULL PRIMARY KEY,
-		stream_id varchar(255) NOT NULL, -- assuming uuid will be used; if you have a different id, implement your own adapter
+		stream_id varchar(255) NOT NULL,
 		stream_version int NOT NULL,
 		stream_type varchar(255) NOT NULL,
 		event_name varchar(255) NOT NULL,

@@ -2,6 +2,8 @@ github.com/ThreeDotsLabs/pii v0.0.0-20221221144555-f2186024b30d h1:bZBc4vDne17OY
 github.com/ThreeDotsLabs/pii v0.0.0-20221221144555-f2186024b30d/go.mod h1:wu5cEZEjFUIXR9hdniDvGbbZARrYHTRi6G2bNaSCC/E=
 github.com/ThreeDotsLabs/pii v0.0.0-20230103125711-e0908da9a963 h1:4EQlsCpfwxjn5ijR8fdL6ap1q04guWUCHgnZ+jPdEjY=
 github.com/ThreeDotsLabs/pii v0.0.0-20230103125711-e0908da9a963/go.mod h1:wu5cEZEjFUIXR9hdniDvGbbZARrYHTRi6G2bNaSCC/E=
+github.com/brianvoe/gofakeit/v6 v6.20.1 h1:8ihJ60OvPnPJ2W6wZR7M+TTeaZ9bml0z6oy4gvyJ/ek=
+github.com/brianvoe/gofakeit/v6 v6.20.1/go.mod h1:Ow6qC71xtwm79anlwKRlWZW6zVq9D2XHE4QSSMP/rU8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

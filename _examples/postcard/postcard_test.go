@@ -27,11 +27,13 @@ var (
 
 func TestPostcard_Lifecycle(t *testing.T) {
 	id := uuid.NewString()
+	streamType := "Postcard"
 
 	assert := assert.New(t)
 
 	pc, err := postcard.NewPostcard(id)
 	assert.Equal(id, pc.ID())
+	assert.Equal(streamType, pc.Stream().Type())
 	assert.NoError(err)
 
 	assert.Empty(pc.Addressee())
@@ -58,7 +60,7 @@ func TestPostcard_Lifecycle(t *testing.T) {
 	}
 	assert.Equal(expectedEvents, events)
 
-	pcLoaded, err := esja.NewEntity(id, events)
+	pcLoaded, err := esja.NewEntityWithStringType(id, streamType, events)
 	assert.NoError(err)
 
 	assert.Equal(senderAddress, pcLoaded.Sender())

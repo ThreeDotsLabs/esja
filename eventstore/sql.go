@@ -73,6 +73,7 @@ func (s SQLStore[T]) initializeSchema(ctx context.Context) error {
 type event struct {
 	streamID      string
 	streamVersion int
+	streamType    string
 	eventName     string
 	eventPayload  []byte
 }
@@ -93,13 +94,19 @@ func (s SQLStore[T]) Load(ctx context.Context, id string) (*T, error) {
 		_ = results.Close()
 	}()
 
+	var streamType string
+
 	var dbEvents []event
 	for results.Next() {
 		e := event{}
 
-		err = results.Scan(&e.streamID, &e.streamVersion, &e.eventName, &e.eventPayload)
+		err = results.Scan(&e.streamID, &e.streamVersion, &e.streamType, &e.eventName, &e.eventPayload)
 		if err != nil {
 			return nil, fmt.Errorf("error reading row result: %w", err)
+		}
+
+		if e.streamType != "" {
+			streamType = e.streamType
 		}
 
 		dbEvents = append(dbEvents, e)
@@ -132,7 +139,7 @@ func (s SQLStore[T]) Load(ctx context.Context, id string) (*T, error) {
 		})
 	}
 
-	return esja.NewEntity(id, events)
+	return esja.NewEntityWithStringType(id, streamType, events)
 }
 
 // Save saves the entity's queued events to the database.

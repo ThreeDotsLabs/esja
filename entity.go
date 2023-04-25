@@ -35,10 +35,29 @@ type Entity[T any] interface {
 // NewEntity instantiates a new T with the given events applied to it.
 // At the same time the entity's internal Stream is initialised,
 // so it can record new upcoming stream.
-func NewEntity[T Entity[T]](id string, eventsSlice []VersionedEvent[T]) (*T, error) {
+func NewEntity[T Entity[T]](
+	id string,
+	eventsSlice []VersionedEvent[T],
+) (*T, error) {
+	return NewEntityWithStringType(id, "", eventsSlice)
+}
+
+// NewEntityWithStringType instantiates a new T with the given
+// stream type and events applied to it.
+// At the same time the entity's internal Stream is initialised,
+// so it can record new upcoming stream.
+func NewEntityWithStringType[T Entity[T]](
+	id string,
+	streamType string,
+	eventsSlice []VersionedEvent[T],
+) (*T, error) {
 	var t T
 
-	stream, err := newStream(id, eventsSlice)
+	stream, err := newStream(
+		id,
+		streamType,
+		eventsSlice,
+	)
 	if err != nil {
 		return nil, err
 	}

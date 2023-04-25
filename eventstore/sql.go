@@ -139,7 +139,7 @@ func (s SQLStore[T]) Load(ctx context.Context, id string) (*T, error) {
 		})
 	}
 
-	return esja.NewEntity(id, streamType, events)
+	return esja.NewEntityWithStringType(id, streamType, events)
 }
 
 // Save saves the entity's queued events to the database.
